@@ -1,0 +1,17 @@
+ld2410_zone_configuration:
+  default:
+    device_title: LD2410
+  card:
+    type: entities
+    title: "[[device_title]] Zone Config"
+    entities:
+      - entity: number.[[device_base_name]]_radar_timeout
+        name: Radar Timeout
+      - entity: number.[[device_base_name]]_radar_zone_1_start
+        name: Start Zone 1
+      - entity: number.[[device_base_name]]_radar_end_zone_1
+        name: End Zone 1
+      - entity: number.[[device_base_name]]_radar_end_zone_2
+        name: End Zone 2
+      - entity: number.[[device_base_name]]_radar_end_zone_3
+        name: End Zone 3

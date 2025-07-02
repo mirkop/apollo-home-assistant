@@ -1,0 +1,200 @@
+ld2412_gate_energy_chart:
+  default:
+    device_title: LD2412
+    move_bar_color: "#4b0082"
+    move_threshold_color: "#9467bd"
+    still_bar_color: "#274e13"
+    still_threshold_color: "#8cb640"
+  card:
+    type: custom:plotly-graph
+    title: "[[device_title]] Gate Energy"
+    refresh_interval: 1
+    raw_plotly_config: true
+    init:
+      ###################
+      # Common Funcions #
+      ###################
+      - $ex {
+          vars.get_entity_state = (entity, default_state) => {
+            let entity_obj = hass.states[entity];
+
+            if (entity_obj === undefined) {
+              if (default_state === undefined) {
+                throw new TypeError("Entity not found -> " + entity);
+              }
+
+              return default_state;
+            }
+
+            var state = entity_obj.state;
+            
+            if (state === undefined || state === null || state === 'unknown') {
+              if (default_state === undefined) {
+                throw new TypeError("Entity state is undefined or null -> " + entity);
+              }
+
+              return default_state;
+            }
+
+            return state;
+          };
+        }
+      ##################################
+      # Radar Engineering Mode Message #
+      ##################################
+      - $ex {
+          let radar_engineering_mode = vars.get_entity_state('select.[[device_base_name]]_mode');
+          vars.show_radar_engineering_mode_on = radar_engineering_mode === 'Engineering';
+        }
+      # - $ex {
+      #     let radar_engineering_mode = vars.get_entity_state('switch.[[device_base_name]]_radar_engineering_mode');
+      #     vars.show_radar_engineering_mode_on = radar_engineering_mode === 'on';
+      #   }
+    defaults:
+      entity:
+        texttemplate: "%{y}"
+        x:
+          - G00
+          - G01
+          - G02
+          - G03
+          - G04
+          - G05
+          - G06
+          - G07
+          - G08
+          - G09
+          - G10
+          - G11
+          - G12
+          - G13
+    entities:
+      - entity: ""
+        name: Move Energy
+        legendgroup: Move
+        type: bar
+        marker:
+          color: "[[move_bar_color]]"
+        "y":
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g00_move_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g01_move_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g02_move_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g03_move_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g04_move_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g05_move_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g06_move_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g07_move_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g08_move_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g09_move_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g10_move_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g11_move_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g12_move_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g13_move_energy', 0)
+      - entity: ""
+        name: Move Threshold
+        legendgroup: Move
+        visible: $ex vars.show_radar_engineering_mode_on
+        type: scatter
+        mode: markers
+        marker:
+          symbol: arrow-right
+          size: 15
+          color: "[[move_threshold_color]]"
+        "y":
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g00_move_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g01_move_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g02_move_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g03_move_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g04_move_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g05_move_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g06_move_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g07_move_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g08_move_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g09_move_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g10_move_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g11_move_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g12_move_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g13_move_threshold')
+      - entity: ""
+        name: Still Energy
+        legendgroup: Still
+        type: bar
+        marker:
+          color: "[[still_bar_color]]"
+        "y":
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g00_still_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g01_still_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g02_still_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g03_still_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g04_still_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g05_still_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g06_still_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g07_still_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g08_still_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g09_still_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g10_still_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g11_still_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g12_still_energy', 0)
+          - $ex vars.get_entity_state('sensor.[[device_base_name]]_g13_still_energy', 0)
+      - entity: ""
+        name: Still Threshold
+        legendgroup: Still
+        visible: $ex vars.show_radar_engineering_mode_on
+        type: scatter
+        mode: markers
+        marker:
+          symbol: arrow-left
+          size: 15
+          color: "[[still_threshold_color]]"
+        "y":
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g00_still_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g01_still_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g02_still_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g03_still_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g04_still_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g05_still_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g06_still_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g07_still_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g08_still_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g09_still_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g10_still_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g11_still_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g12_still_threshold')
+          - $ex vars.get_entity_state('number.[[device_base_name]]_g13_still_threshold')
+    layout:
+      #height: 600
+      barmode: group
+      dragmode: false
+      hovermode: false
+      legend:
+        itemsizing: constant
+        orientation: h
+      margin:
+        t: 15
+        l: 30
+        r: 10
+      xaxis:
+        showgrid: false
+        tickfont:
+          size: 14
+      yaxis:
+        dtick: 10
+        fixedrange: true
+        range:
+          - 0
+          - 100.3 # Used 100.3 to avoid the top grid line being cut off.
+      annotations:
+        - text: 'Turn on "Radar Engineering Mode"<br>to see the gate energy values.'
+          visible: $ex !vars.show_radar_engineering_mode_on
+          showarrow: false
+          xanchor: left
+          x: G01
+          y: 50
+          font:
+            size: 20
+            color: "#FFFFFF"
+          borderpad: 18
+          bgcolor: "#000000BB"
+    config:
+      displayModeBar: false
+      disablePinchToZoom: true

@@ -1,0 +1,658 @@
+ld2450_target_chart:
+  default:
+    chart_title: LD2450 Targets
+    chart_history_time: 0
+    target_marker_size: 5
+    # mm|cm|m|in|ft|yd
+    # chart_unit_of_measurement: cm
+    chart_unit_of_measurement: input_entity
+    chart_unit_of_measurement_entity: input_select.ld2450_chart_unit_of_measurement
+  card:
+    type: custom:plotly-graph
+    title: "[[chart_title]]"
+    hours_to_show: "[[chart_history_time]]"
+    refresh_interval: 1
+    raw_plotly_config: true
+    init:
+      ###################
+      # Common Funcions #
+      ###################
+      - $ex {
+          vars.is_valid_uom = (uom) => {
+            return uom === 'mm' ||
+                   uom === 'cm' ||
+                   uom === 'm' ||
+                   uom === 'in' ||
+                   uom === 'ft' ||
+                   uom === 'yd';
+          }
+
+          vars.get_entity_uom = (entity, default_uom) => {
+            let entity_obj = hass.states[entity];
+
+            if (entity_obj === undefined) {
+              if (default_uom === undefined) {
+                throw new TypeError("UOM entity not found -> " + entity);
+              }
+              
+              return default_uom;
+            }
+
+            var uom = undefined;
+
+            if (entity_obj.attributes !== undefined &&
+                entity_obj.attributes.unit_of_measurement !== undefined) {
+              uom = entity_obj.attributes.unit_of_measurement;
+            } else {
+              uom = entity_obj.state;
+            }
+            
+            if (uom === undefined || !vars.is_valid_uom(uom)) {
+              if (default_uom === undefined) {
+                throw new TypeError("Entity UOM is invalid -> " + entity + " === " + uom);
+              }
+              
+              return default_uom;
+            }
+
+            return uom;
+          }
+
+          vars.is_valid_uov = (uov) => {
+            return uov === "mm/s" ||
+                   uov === "cm/s" ||
+                   uov === "m/s"  ||
+                   uov === "ft/s" ||
+                   uov === "in/s" ||
+                   uov === "yd/s" ||
+                   uov === "km/h" ||
+                   uov === "kn"   ||
+                   uov === "mm/d" ||
+                   uov === "mm/h" ||
+                   uov === "mph";
+          };
+
+          vars.get_entity_uov = (entity, default_uov) => {
+            let entity_obj = hass.states[entity];
+
+            if (entity_obj === undefined) {
+              if (default_uov === undefined) {
+                throw new TypeError("UOV entity not found -> " + entity);
+              }
+              
+              return default_uov;
+            }
+
+            var uov = undefined;
+
+            if (entity_obj.attributes !== undefined &&
+                entity_obj.attributes.unit_of_measurement !== undefined) {
+              uov = entity_obj.attributes.unit_of_measurement;
+            } else {
+              uov = entity_obj.state;
+            }
+            
+            if (uov === undefined || !vars.is_valid_uov(uov)) {
+              if (default_uov === undefined) {
+                throw new TypeError("Entity UOV is invalid -> " + entity + " === " + uov);
+              }
+              
+              return default_uov;
+            }
+
+            return uov;
+          };
+
+          vars.conversionTable = [
+            ['mm_cm', 0.1], ['mm_m', 0.001], ['mm_in', 1/25.4], ['mm_ft', 1/304.8], ['mm_yd', 1/914.4],
+            ['cm_mm', 10], ['cm_m', 0.01], ['cm_in', 1/2.54], ['cm_ft', 1/30.48], ['cm_yd', 1/91.44],
+            ['m_mm', 1000], ['m_cm', 100], ['m_in', 39.3701], ['m_ft', 3.28084], ['m_yd', 1.09361],
+            ['in_mm', 25.4], ['in_cm', 2.54], ['in_m', 1/39.3701], ['in_ft', 1/12], ['in_yd', 1/36],
+            ['ft_mm', 304.8], ['ft_cm', 30.48], ['ft_m', 1/3.28084], ['ft_in', 12], ['ft_yd', 1/3],
+            ['yd_mm', 914.4], ['yd_cm', 91.44], ['yd_m', 1/1.09361], ['yd_in', 36], ['yd_ft', 3]
+          ];
+          
+          vars.chart_uom = '[[chart_unit_of_measurement]]';
+          
+          if (vars.chart_uom === 'input_entity') {
+            let chart_uom_entity = '[[chart_unit_of_measurement_entity]]';
+            vars.chart_uom = vars.get_entity_uom(chart_uom_entity, 'mm');
+          }
+
+          if (!vars.is_valid_uom(vars.chart_uom)) {
+            vars.chart_uom = "mm";
+          }
+
+          vars.convert_to_chart_uom = (from_uom, value) => {
+            if (from_uom === vars.chart_uom) return value;
+
+            let key = from_uom + '_' + vars.chart_uom;
+            for (let i = 0; i < vars.conversionTable.length; i++) {
+              if (vars.conversionTable[i][0] === key) {
+                return value * vars.conversionTable[i][1];
+              }
+            }
+            
+            return value;
+          }
+
+          vars.get_entity_state = (entity, default_state) => {
+            let entity_obj = hass.states[entity];
+
+            if (entity_obj === undefined) {
+              if (default_state === undefined) {
+                throw new TypeError("Entity not found -> " + entity);
+              }
+
+              return default_state;
+            }
+
+            var state = entity_obj.state;
+            
+            if (state === undefined || state === null) {
+              if (default_state === undefined) {
+                throw new TypeError("Entity state is undefined or null -> " + entity);
+              }
+
+              return default_state;
+            }
+
+            return state;
+          }
+
+          vars.entity_to_chart_uom_value = (entity_name, places = 0) => {
+            return Number(vars.convert_to_chart_uom(vars.get_entity_uom(entity_name), vars.get_entity_state(entity_name, 0))).toFixed(places);
+          }
+
+          vars.data_array_to_chart_uom_values = (entity_uom, data_array) => {
+            let updated_data_array = [];
+
+            data_array.forEach(val => {
+              updated_data_array.push(vars.convert_to_chart_uom(entity_uom, val));
+            });
+
+            return updated_data_array;
+          }
+
+          vars.mm_to_chart_uom_value = (mm_value) => {
+            return vars.convert_to_chart_uom('mm', mm_value);
+          }
+
+          vars.target_direction = (target_entity) => {
+            let direction = vars.get_entity_state(target_entity);
+            if (direction === 'Stationary') return '⏸';
+            if (direction === 'Approaching') return '⬆';
+            if (direction === 'Moving away') return '⬇';
+            return '-';
+          }
+
+          vars.show_target = (target_number) => {
+            return [
+                     vars.get_entity_state(`sensor.[[device_base_name]]_target_${target_number}_x`, 0),
+                     vars.get_entity_state(`sensor.[[device_base_name]]_target_${target_number}_y`, 0)
+                   ].every(v => Number(v) !== 0);
+          }
+
+          vars.show_zone = (zone_number) => {
+            return [
+                      vars.get_entity_state(`number.[[device_base_name]]_zone_${zone_number}_x1`, 0),
+                      vars.get_entity_state(`number.[[device_base_name]]_zone_${zone_number}_x2`, 0),
+                      vars.get_entity_state(`number.[[device_base_name]]_zone_${zone_number}_y1`, 0),
+                      vars.get_entity_state(`number.[[device_base_name]]_zone_${zone_number}_y2`, 0)
+                   ].some(v => Number(v) !== 0);
+          }
+
+          vars.convert_speed = (speed_uov, speed_value) => {
+            const conversionTable = [
+              ["mm/s", 0.001],
+              ["cm/s", 0.01],
+              ["m/s" , 1],
+              ["ft/s", 0.3048],
+              ["in/s", 0.0254],
+              ["yd/s", 0.9144],
+              ["km/h", 1000/3600],
+              ["kn"  , 0.514444],
+              ["mm/d", 0.001/86400],
+              ["mm/h", 0.001/3600],
+              ["mph" , 0.44704]
+            ];
+
+            let fromFactor = null;
+            let toFactor = null;
+            let to_uov = `${vars.chart_uom}/s`;
+
+            for (let i = 0; i < conversionTable.length; i++) {
+              if (conversionTable[i][0] === speed_uov) {
+                fromFactor = conversionTable[i][1];
+              }
+              if (conversionTable[i][0] === to_uov) {
+                toFactor = conversionTable[i][1];
+              }
+            }
+
+            if (fromFactor === null) {
+              return "Unsupported 'from' unit";
+            }
+            if (toFactor === null) {
+              return "Unsupported 'to' unit";
+            }
+
+            return speed_value * fromFactor / toFactor;
+          }
+
+          vars.speed_entity_to_chart_uov_value = (entity_name, places = 0) => {
+            return Number(vars.convert_speed(vars.get_entity_uov(entity_name), vars.get_entity_state(entity_name, 0))).toFixed(places);
+          }
+
+          if (vars.chart_uom === 'mm') vars.dtick = 1000;
+          if (vars.chart_uom === 'cm') vars.dtick = 100;
+          if (vars.chart_uom === 'm')  vars.dtick = 1;
+          if (vars.chart_uom === 'in') vars.dtick = 36;
+          if (vars.chart_uom === 'ft') vars.dtick = 3;
+          if (vars.chart_uom === 'yd') vars.dtick = 1;
+        }
+
+      ####################
+      # Input Validation #
+      ####################
+      - $ex {
+          let chart_uom = '[[chart_unit_of_measurement]]';
+
+          if (chart_uom !== 'input_entity' && !vars.is_valid_uom(chart_uom)) {
+            throw new TypeError("Invalid chart_unit_of_measurement [valid - mm|cm|m|in|ft|yd], " + chart_uom);
+          }
+        }
+
+      ###########################
+      # Zone Boundry Validation #
+      ###########################
+      - $ex {
+          var x1 = Number(vars.get_entity_state("number.[[device_base_name]]_zone_1_x1"));
+          var x2 = Number(vars.get_entity_state("number.[[device_base_name]]_zone_1_x2"));
+          if (x1 > x2) { throw new TypeError(`Zone 1 X1 (${x1}) is greater than X2 (${x2})`); }
+        }
+
+      - $ex {
+          var y1 = Number(vars.get_entity_state("number.[[device_base_name]]_zone_1_y1"));
+          var y2 = Number(vars.get_entity_state("number.[[device_base_name]]_zone_1_y2"));
+          if (y1 > y2) { throw new TypeError(`Zone 1 Y1 (${y1}) is greater than Y2 (${y2})`); }
+        }
+
+      - $ex {
+          var x1 = Number(vars.get_entity_state("number.[[device_base_name]]_zone_2_x1"));
+          var x2 = Number(vars.get_entity_state("number.[[device_base_name]]_zone_2_x2"));
+          if (x1 > x2) { throw new TypeError(`Zone 2 X1 (${x1}) is greater than X2 (${x2})`); }
+        }
+
+      - $ex {
+          var y1 = Number(vars.get_entity_state("number.[[device_base_name]]_zone_2_y1"));
+          var y2 = Number(vars.get_entity_state("number.[[device_base_name]]_zone_2_y2"));
+          if (y1 > y2) { throw new TypeError(`Zone 2 Y1 (${y1}) is greater than Y2 (${y2})`); }
+        }
+
+      - $ex {
+          var x1 = Number(vars.get_entity_state("number.[[device_base_name]]_zone_3_x1"));
+          var x2 = Number(vars.get_entity_state("number.[[device_base_name]]_zone_3_x2"));
+          if (x1 > x2) { throw new TypeError(`Zone 3 X1 (${x1}) is greater than X2 (${x2})`); }
+        }
+
+      - $ex {
+          var y1 = Number(vars.get_entity_state("number.[[device_base_name]]_zone_3_y1"));
+          var y2 = Number(vars.get_entity_state("number.[[device_base_name]]_zone_3_y2"));
+          if (y1 > y2) { throw new TypeError(`Zone 3 Y1 (${y1}) is greater than Y2 (${y2})`); }
+        }
+
+    entities:
+      ####################
+      # Coverage Boundry #
+      ####################
+      - entity: ''
+        name: Coverage
+        legendgroup: Boundries
+        legendrank: 1000
+        mode: lines
+        fill: tonexty
+        fillcolor: rgba(255, 255, 255, 0.06)
+        line:
+          shape: line
+          width: 1
+          # dash: dot
+        x:
+          - 0
+          - $ex vars.mm_to_chart_uom_value(7500 * Math.sin((2 * Math.PI)/360 * 60));
+          - $ex vars.mm_to_chart_uom_value(6000);
+          - $ex vars.mm_to_chart_uom_value(5000);
+          - $ex vars.mm_to_chart_uom_value(4000);
+          - $ex vars.mm_to_chart_uom_value(3000);
+          - $ex vars.mm_to_chart_uom_value(2000);
+          - $ex vars.mm_to_chart_uom_value(1000);
+          - 0
+          - $ex vars.mm_to_chart_uom_value(-1000);
+          - $ex vars.mm_to_chart_uom_value(-2000);
+          - $ex vars.mm_to_chart_uom_value(-3000);
+          - $ex vars.mm_to_chart_uom_value(-4000);
+          - $ex vars.mm_to_chart_uom_value(-5000);
+          - $ex vars.mm_to_chart_uom_value(-6000);
+          - $ex vars.mm_to_chart_uom_value(-7500 * Math.sin((2 * Math.PI)/360 * 60));
+          - 0
+        'y':
+          - 0
+          - $ex vars.mm_to_chart_uom_value(7500 * Math.cos((2 * Math.PI)/360 * 60))
+          - $ex vars.mm_to_chart_uom_value(Math.sqrt(7500**2 - 6000**2))
+          - $ex vars.mm_to_chart_uom_value(Math.sqrt(7500**2 - 5000**2))
+          - $ex vars.mm_to_chart_uom_value(Math.sqrt(7500**2 - 4000**2))
+          - $ex vars.mm_to_chart_uom_value(Math.sqrt(7500**2 - 3000**2))
+          - $ex vars.mm_to_chart_uom_value(Math.sqrt(7500**2 - 2000**2))
+          - $ex vars.mm_to_chart_uom_value(Math.sqrt(7500**2 - 1000**2))
+          - $ex vars.mm_to_chart_uom_value(7500)
+          - $ex vars.mm_to_chart_uom_value(Math.sqrt(7500**2 - 1000**2))
+          - $ex vars.mm_to_chart_uom_value(Math.sqrt(7500**2 - 2000**2))
+          - $ex vars.mm_to_chart_uom_value(Math.sqrt(7500**2 - 3000**2))
+          - $ex vars.mm_to_chart_uom_value(Math.sqrt(7500**2 - 4000**2))
+          - $ex vars.mm_to_chart_uom_value(Math.sqrt(7500**2 - 5000**2))
+          - $ex vars.mm_to_chart_uom_value(Math.sqrt(7500**2 - 6000**2))
+          - $ex vars.mm_to_chart_uom_value(7500 * Math.cos((2 * Math.PI)/360 * 60))
+          - 0
+
+      ##################
+      # Zone Boundries #
+      ##################
+      - entity: ''
+        name: Zone 1
+        visible: $ex vars.show_zone('1');
+        legendgroup: Boundries
+        legendrank: 300
+        mode: lines
+        fill: toself
+        fillcolor: rgba(20,200,0,0.06)
+        line:
+          color: rgba(20,200,0,0.66)
+          shape: line
+          width: 1
+        x:
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_1_x1", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_1_x1", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_1_x2", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_1_x2", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_1_x1", 6)
+        "y":
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_1_y1", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_1_y2", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_1_y2", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_1_y1", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_1_y1", 6)
+      - entity: ''
+        name: Zone 2
+        visible: $ex vars.show_zone('2');
+        legendgroup: Boundries
+        legendrank: 200
+        mode: lines
+        fill: toself
+        fillcolor: rgba(200,0,255,0.06)
+        line:
+          color: rgba(200,0,255,0.66)
+          shape: line
+          width: 1
+        x:
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_2_x1", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_2_x1", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_2_x2", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_2_x2", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_2_x1", 6)
+        "y":
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_2_y1", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_2_y2", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_2_y2", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_2_y1", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_2_y1", 6)
+      - entity: ''
+        name: Zone 3
+        visible: $ex vars.show_zone('3');
+        legendgroup: Boundries
+        legendrank: 100
+        mode: lines
+        fill: toself
+        fillcolor: rgba(200,120,55,0.06)
+        line:
+          color: rgba(200,120,55,0.66)
+          shape: line
+          width: 1
+        x:
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_3_x1", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_3_x1", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_3_x2", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_3_x2", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_3_x1", 6)
+        "y":
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_3_y1", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_3_y2", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_3_y2", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_3_y1", 6)
+          - $ex vars.entity_to_chart_uom_value("number.[[device_base_name]]_zone_3_y1", 6)
+
+      ###################
+      # Target X/Y Data #
+      ###################
+      - entity: sensor.[[device_base_name]]_target_1_x
+        internal: true
+        fn: $ex vars.target_1_x = vars.data_array_to_chart_uom_values(vars.get_entity_uom('sensor.[[device_base_name]]_target_1_x'), ys);
+      - entity: sensor.[[device_base_name]]_target_1_y
+        internal: true
+        fn: $ex vars.target_1_y = vars.data_array_to_chart_uom_values(vars.get_entity_uom('sensor.[[device_base_name]]_target_1_y'), ys);
+      - entity: sensor.[[device_base_name]]_target_2_x
+        internal: true
+        fn: $ex vars.target_2_x = vars.data_array_to_chart_uom_values(vars.get_entity_uom('sensor.[[device_base_name]]_target_2_x'), ys);
+      - entity: sensor.[[device_base_name]]_target_2_y
+        internal: true
+        fn: $ex vars.target_2_y = vars.data_array_to_chart_uom_values(vars.get_entity_uom('sensor.[[device_base_name]]_target_2_y'), ys);
+      - entity: sensor.[[device_base_name]]_target_3_x
+        internal: true
+        fn: $ex vars.target_3_x = vars.data_array_to_chart_uom_values(vars.get_entity_uom('sensor.[[device_base_name]]_target_3_x'), ys);
+      - entity: sensor.[[device_base_name]]_target_3_y
+        internal: true
+        fn: $ex vars.target_3_y = vars.data_array_to_chart_uom_values(vars.get_entity_uom('sensor.[[device_base_name]]_target_3_y'), ys);
+
+      ##################
+      # Target Markers #
+      ##################
+      - entity: ''
+        name: Target 1
+        legendgroup: Targets
+        legendrank: 1300
+        # visible: $ex vars.show_target('1');
+
+        type: scatter
+        mode: markers
+        marker:
+          size: '[[target_marker_size]]'
+
+        x: $ex vars.target_1_x;
+        'y': $ex vars.target_1_y;
+      - entity: ''
+        name: Target 2
+        legendgroup: Targets
+        legendrank: 1200
+        # visible: $ex vars.show_target('2');
+
+        type: scatter
+        mode: markers
+        marker:
+          size: '[[target_marker_size]]'
+
+        x: $ex vars.target_2_x;
+        'y': $ex vars.target_2_y;
+      - entity: ''
+        name: Target 3
+        legendgroup: Targets
+        legendrank: 1100
+        # visible: $ex vars.show_target('3');
+
+        type: scatter
+        mode: markers
+        marker:
+          size: '[[target_marker_size]]'
+
+        x: $ex vars.target_3_x;
+        'y': $ex vars.target_3_y;
+      
+      ######################
+      # Target Count Table #
+      ######################
+      - entity: ''
+        type: table
+        domain:
+          x: [ 0.2, 0.8 ]
+          "y": [ 0.75, 1 ]
+        showlegend: false
+        columnwidth: [90,100,100,100]
+        header:
+          values:
+            - Location
+            - Detected
+            - Moving
+            - Still
+          fill:
+            color: $ex css_vars["primary-color"]
+          font:
+            weight: 750
+            color: $ex css_vars["primary-text-color"]
+        cells:
+          values:
+            - - All
+              - Zone-1
+              - Zone-2
+              - Zone-3
+
+            - - $ex vars.get_entity_state('sensor.[[device_base_name]]_presence_target_count');
+              - $ex vars.get_entity_state('sensor.[[device_base_name]]_zone_1_all_target_count');
+              - $ex vars.get_entity_state('sensor.[[device_base_name]]_zone_2_all_target_count');
+              - $ex vars.get_entity_state('sensor.[[device_base_name]]_zone_3_all_target_count');
+
+            - - $ex vars.get_entity_state('sensor.[[device_base_name]]_moving_target_count');
+              - $ex vars.get_entity_state('sensor.[[device_base_name]]_zone_1_moving_target_count');
+              - $ex vars.get_entity_state('sensor.[[device_base_name]]_zone_2_moving_target_count');
+              - $ex vars.get_entity_state('sensor.[[device_base_name]]_zone_3_moving_target_count');
+
+            - - $ex vars.get_entity_state('sensor.[[device_base_name]]_still_target_count');
+              - $ex vars.get_entity_state('sensor.[[device_base_name]]_zone_1_still_target_count');
+              - $ex vars.get_entity_state('sensor.[[device_base_name]]_zone_2_still_target_count');
+              - $ex vars.get_entity_state('sensor.[[device_base_name]]_zone_3_still_target_count');
+          fill:
+            color: $ex css_vars["card-background-color"]
+          font:
+            color:
+              - $ex css_vars["primary-text-color"]
+              - $ex css_vars["secondary-text-color"]
+
+      #####################
+      # Target Data Table #
+      #####################
+      - entity: ''
+        type: table
+        domain: 
+          x: [ 0, 1 ]
+          "y": [ 0.52, 0.73 ]
+        showlegend: false
+        columnwidth: [35,100,60,63,40,30]
+        header:
+          values:
+            - Target
+            - X,Y
+            - $ex `Dist(${vars.chart_uom})`
+            - $ex `Spd(${vars.chart_uom}/s)`
+            - Angle
+            - Dir
+          fill:
+            color: $ex css_vars["primary-color"]
+          font:
+            weight: 750
+            color: $ex css_vars["primary-text-color"]
+        cells:
+          values:
+            - [ 1, 2, 3]
+            # Target X/Y
+            - - $ex vars.entity_to_chart_uom_value('sensor.[[device_base_name]]_target_1_x', 1) + ', ' + vars.entity_to_chart_uom_value('sensor.[[device_base_name]]_target_1_y', 1);
+              - $ex vars.entity_to_chart_uom_value('sensor.[[device_base_name]]_target_2_x', 1) + ', ' + vars.entity_to_chart_uom_value('sensor.[[device_base_name]]_target_2_y', 1);
+              - $ex vars.entity_to_chart_uom_value('sensor.[[device_base_name]]_target_3_x', 1) + ', ' + vars.entity_to_chart_uom_value('sensor.[[device_base_name]]_target_3_y', 1);
+            # Target Distance
+            - - $ex vars.entity_to_chart_uom_value('sensor.[[device_base_name]]_target_1_distance', 2);
+              - $ex vars.entity_to_chart_uom_value('sensor.[[device_base_name]]_target_2_distance', 2);
+              - $ex vars.entity_to_chart_uom_value('sensor.[[device_base_name]]_target_3_distance', 2);
+            # Target Speed (TODO: COnver from entity speed to chart speed)
+            - - $ex vars.speed_entity_to_chart_uov_value('sensor.[[device_base_name]]_target_1_speed', 3);
+              - $ex vars.speed_entity_to_chart_uov_value('sensor.[[device_base_name]]_target_2_speed', 3);
+              - $ex vars.speed_entity_to_chart_uov_value('sensor.[[device_base_name]]_target_3_speed', 3);
+            # Target Angle
+            - - $ex vars.get_entity_state('sensor.[[device_base_name]]_target_1_angle');
+              - $ex vars.get_entity_state('sensor.[[device_base_name]]_target_2_angle');
+              - $ex vars.get_entity_state('sensor.[[device_base_name]]_target_3_angle');
+            # Target Direction
+            - - $ex vars.target_direction('sensor.[[device_base_name]]_target_1_direction');
+              - $ex vars.target_direction('sensor.[[device_base_name]]_target_2_direction');
+              - $ex vars.target_direction('sensor.[[device_base_name]]_target_3_direction');
+          fill:
+            color: $ex css_vars["card-background-color"]
+          font:
+            color:
+              - $ex css_vars["primary-text-color"]
+              - $ex css_vars["secondary-text-color"]
+
+    layout:
+      height: 575
+      hovermode: true
+      legend:
+        orientation: h
+      margin:
+        t: 10
+        l: 35
+        r: 30
+        
+      xaxis:
+        dtick: $ex vars.dtick
+        tickangle: 30
+        gridcolor: rgba(200,200,200,0.15)
+        zerolinecolor: rgba(200,200,200,0.15)
+        fixedrange: true
+        range:
+          - $ex vars.mm_to_chart_uom_value(-7500);
+          - $ex vars.mm_to_chart_uom_value(7500);
+      yaxis:
+        domain: [ 0, 0.5 ]
+        dtick: $ex vars.dtick
+        tickangle: -30
+        gridcolor: rgba(200,200,200,0.15)
+        zerolinecolor: rgba(200,200,200,0.15)
+        scaleanchor: x
+        fixedrange: true
+        range:
+          - $ex vars.mm_to_chart_uom_value(8000);
+          - 0
+
+      annotations:
+        - text: $ex `Units - ${vars.chart_uom}`
+          showarrow: false
+          xanchor: left
+          yanchor: top
+          x: $ex vars.mm_to_chart_uom_value(-7500);
+          y: $ex vars.mm_to_chart_uom_value(500);
+          font:
+            size: 16
+            color: $ex css_vars["primary-text-color"]
+          borderpad: 3
+          bgcolor: $ex css_vars["primary-color"]
+
+    config:
+      displayModeBar: true
+      displaylogo: false
+      modeBarButtonsToRemove:
+        - zoom2d
+        - pan2d
+        - select2d
+        - lasso2d
+        - zoomIn2d
+        - zoomOut2d
+        - autoScale2d
+        - resetScale2d
+      modeBarButtonsToAdd:
+        - name: Reset
+          click: $ex (gd) => { gd.parentElement.querySelector("#reset").click(); }

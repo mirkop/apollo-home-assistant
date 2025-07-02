@@ -1,0 +1,386 @@
+ld2412_gate_distance_chart:
+  default:
+    device_title: LD2412
+    gate_min_max_bar_color: "#4b0082"
+    show_radar_targets: true
+    show_gates: true
+    show_min_max_gates: true
+    bar_size: 35
+    # mm|cm|m|in|ft|yd
+    chart_unit_of_measurement: input_entity
+    chart_unit_of_measurement_entity: input_select.ld2412_distances_chart_unit_of_measurement
+  card:
+    type: custom:plotly-graph
+    title: "[[device_title]] Distances"
+    # ha_theme: false
+    refresh_interval: 1
+    raw_plotly_config: true
+    init:
+      ###################
+      # Common Funcions #
+      ###################
+      - $ex {
+          vars.is_valid_uom = (uom) => {
+            return uom === 'mm' ||
+                   uom === 'cm' ||
+                   uom === 'm' ||
+                   uom === 'in' ||
+                   uom === 'ft' ||
+                   uom === 'yd';
+          };
+
+          vars.get_entity_state = (entity, default_state) => {
+            let entity_obj = hass.states[entity];
+
+            if (entity_obj === undefined) {
+              if (default_state === undefined) {
+                throw new TypeError("Entity not found -> " + entity);
+              }
+
+              return default_state;
+            }
+
+            var state = entity_obj.state;
+            
+            if (state === undefined || state === null) {
+              if (default_state === undefined) {
+                throw new TypeError("Entity state is undefined or null -> " + entity);
+              }
+
+              return default_state;
+            }
+
+            return state;
+          };
+
+          vars.get_entity_uom = (entity, default_uom) => {
+            let entity_obj = hass.states[entity];
+
+            if (entity_obj === undefined) {
+              if (default_uom === undefined) {
+                throw new TypeError("UOM entity not found -> " + entity);
+              }
+              
+              return default_uom;
+            }
+
+            var uom = undefined;
+
+            if (entity_obj.attributes !== undefined &&
+                entity_obj.attributes.unit_of_measurement !== undefined) {
+              uom = entity_obj.attributes.unit_of_measurement;
+            } else {
+              uom = entity_obj.state;
+            }
+            
+            if (uom === undefined || !vars.is_valid_uom(uom)) {
+              if (default_uom === undefined) {
+                throw new TypeError("Entity UOM is invalid -> " + entity + " === " + uom);
+              }
+              
+              return default_uom;
+            }
+
+            return uom;
+          };
+
+          vars.convert_to_chart_uom = (from_uom, value) => {
+            let chart_uom_entity = '[[chart_unit_of_measurement_entity]]';
+            let input_entity = 'input_entity';
+
+            vars.chart_uom = '[[chart_unit_of_measurement]]';
+
+            if (vars.chart_uom === input_entity) {
+              vars.chart_uom = vars.get_entity_uom(chart_uom_entity, 'cm');
+            }
+
+            if (from_uom === vars.chart_uom) return value;
+
+            // Convert each from_uom to the chart_uom (chart_unit_of_measurement)
+            // mm, cm, m, in, ft, yd
+
+            if (from_uom == 'mm' && vars.chart_uom == 'cm') return value / 10;
+            if (from_uom == 'mm' && vars.chart_uom == 'm')  return value / 1000;
+            if (from_uom == 'mm' && vars.chart_uom == 'in') return value / 25.4;
+            if (from_uom == 'mm' && vars.chart_uom == 'ft') return value / 304.8;
+            if (from_uom == 'mm' && vars.chart_uom == 'yd') return value / 914.4;
+
+            if (from_uom == 'cm' && vars.chart_uom == 'mm') return value * 10;
+            if (from_uom == 'cm' && vars.chart_uom == 'm')  return value / 100;
+            if (from_uom == 'cm' && vars.chart_uom == 'in') return value / 2.54;
+            if (from_uom == 'cm' && vars.chart_uom == 'ft') return value / 30.48;
+            if (from_uom == 'cm' && vars.chart_uom == 'yd') return value / 91.44;
+
+            if (from_uom == 'm'  && vars.chart_uom == 'mm') return value * 1000;
+            if (from_uom == 'm'  && vars.chart_uom == 'cm') return value * 100;
+            if (from_uom == 'm'  && vars.chart_uom == 'in') return value * 39.3701;
+            if (from_uom == 'm'  && vars.chart_uom == 'ft') return value * 3.28084;
+            if (from_uom == 'm'  && vars.chart_uom == 'yd') return value * 1.09361;
+
+            if (from_uom == 'in' && vars.chart_uom == 'mm') return value * 25.4;
+            if (from_uom == 'in' && vars.chart_uom == 'cm') return value * 2.54;
+            if (from_uom == 'in' && vars.chart_uom == 'm')  return value / 39.3701;
+            if (from_uom == 'in' && vars.chart_uom == 'ft') return value / 12;
+            if (from_uom == 'in' && vars.chart_uom == 'yd') return value / 36;
+
+            if (from_uom == 'ft' && vars.chart_uom == 'mm') return value * 304.8;
+            if (from_uom == 'ft' && vars.chart_uom == 'cm') return value * 30.48;
+            if (from_uom == 'ft' && vars.chart_uom == 'm')  return value / 3.28084;
+            if (from_uom == 'ft' && vars.chart_uom == 'in') return value * 12;
+            if (from_uom == 'ft' && vars.chart_uom == 'yd') return value / 3;
+
+            if (from_uom == 'yd' && vars.chart_uom == 'mm') return value * 914.4;
+            if (from_uom == 'yd' && vars.chart_uom == 'cm') return value * 91.44;
+            if (from_uom == 'yd' && vars.chart_uom == 'm')  return value / 1.09361;
+            if (from_uom == 'yd' && vars.chart_uom == 'in') return value * 36;
+            if (from_uom == 'yd' && vars.chart_uom == 'ft') return value * 3;
+
+            return value;
+          };
+
+          vars.get_occupied_symbol = (entity_state) =>{
+            if (entity_state === 'on') {
+              return "circle";
+            } else {
+              return "circle-open";
+            }
+          }
+
+        }
+      ####################
+      # Input Validation #
+      ####################
+      - $ex {
+          let chart_uom = '[[chart_unit_of_measurement]]';
+
+          if (chart_uom !== 'input_entity' && !vars.is_valid_uom(chart_uom)) {
+            throw new TypeError("Invalid chart_unit_of_measurement [valid - mm|cm|m|in|ft|yd], " + chart_uom);
+          }
+        }
+      ####################
+      # Common Variables #
+      ####################
+      - $ex {
+          let gate_size_str = vars.get_entity_state('select.[[device_base_name]]_distance_resolution', '0.75m');
+          vars.gate_size = vars.convert_to_chart_uom('m', parseFloat(gate_size_str.replace(/[^0-9.]/g, '')));
+          vars.max_detection_range = vars.gate_size * 13;
+
+          vars.marker_symbol_size = 10;
+
+          vars.show_radar_targets = Boolean('[[show_radar_targets]]');
+          vars.show_gates = Boolean('[[show_gates]]');
+          vars.show_min_max_gates = Boolean('[[show_min_max_gates]]');
+        }
+      ######################
+      # Min/Max Gates Bars #
+      ######################
+      - $ex {
+          vars.radar_min_gate = Number(vars.get_entity_state('number.[[device_base_name]]_min_distance_gate'));
+          vars.radar_max_gate = Number(vars.get_entity_state('number.[[device_base_name]]_max_distance_gate'));
+
+          if (vars.radar_min_gate > vars.radar_max_gate) {
+            throw new TypeError("Min distance gate cannot be greater than max gate => " + vars.radar_min_gate + " > " + vars.radar_max_gate);  
+          }
+          
+          vars.min_gate = (vars.radar_min_gate-1) * vars.gate_size;
+
+          vars.max_gate = vars.radar_max_gate * vars.gate_size;
+        }
+      ################
+      # Radar Target #
+      ################
+      - $ex {
+          vars.radar_target_size = vars.gate_size * (14/3) * 0.75;
+          vars.radar_target_spacer_size = vars.gate_size / 2;
+          vars.radar_target_marker_offset = vars.radar_target_size * 0.13;
+
+          let radar_target_state = vars.get_entity_state('binary_sensor.[[device_base_name]]_presence');
+          vars.radar_target_occupied_symbol = vars.get_occupied_symbol(radar_target_state);
+
+          let radar_moving_target_state = vars.get_entity_state('binary_sensor.[[device_base_name]]_moving_target');
+          vars.radar_target_moving_occupied_symbol = vars.get_occupied_symbol(radar_moving_target_state);
+
+          let radar_still_target_state = vars.get_entity_state('binary_sensor.[[device_base_name]]_still_target');
+          vars.radar_target_still_occupied_symbol = vars.get_occupied_symbol(radar_still_target_state);
+        }
+      ##########
+      # Layout #
+      ##########
+      - $ex {
+          vars.bar_size = parseInt('[[bar_size]]');
+
+          vars.layout_margin_t = 15;
+          vars.layout_margin_b = 65;
+          vars.layout_height = vars.layout_margin_t + vars.layout_margin_b;
+
+          if (vars.show_gates) vars.layout_height += vars.bar_size;
+          if (vars.show_min_max_gates) vars.layout_height += (vars.bar_size * 2);
+        }
+    defaults:
+      entity:
+        type: bar
+        showlegend: false
+        orientation: h
+        insidetextanchor: "middle"
+    entities:
+      #############
+      # Gate Bars #
+      #############
+      - entity: ""
+        visible: $ex vars.show_gates
+        marker:
+          # Blackbody,Bluered,Blues,Cividis,Earth,Electric,Greens,Greys,Hot,Jet,Picnic,Portland,Rainbow,RdBu,Reds,Viridis,YlGnBu,YlOrRd
+          colorscale: Portland
+          color:
+            - 0
+            - 1
+            - 2
+            - 3
+            - 4
+            - 5
+            - 6
+            - 7
+            - 8
+            - 9
+            - 10
+            - 11
+            - 12
+        texttemplate:
+          - "G01"
+          - "G02"
+          - "G03"
+          - "G04"
+          - "G05"
+          - "G06"
+          - "G07"
+          - "G08"
+          - "G09"
+          - "G10"
+          - "G11"
+          - "G12"
+          - "G13"
+        x:
+          - $ex vars.gate_size
+          - $ex vars.gate_size
+          - $ex vars.gate_size
+          - $ex vars.gate_size
+          - $ex vars.gate_size
+          - $ex vars.gate_size
+          - $ex vars.gate_size
+          - $ex vars.gate_size
+          - $ex vars.gate_size
+          - $ex vars.gate_size
+          - $ex vars.gate_size
+          - $ex vars.gate_size
+          - $ex vars.gate_size
+        "y":
+          - Gates
+          - Gates
+          - Gates
+          - Gates
+          - Gates
+          - Gates
+          - Gates
+          - Gates
+          - Gates
+          - Gates
+          - Gates
+          - Gates
+          - Gates
+          - Gates
+      ######################
+      # Min/Max Gates Bars #
+      ######################
+      - entity: ""
+        visible: $ex vars.show_min_max_gates
+        texttemplate:
+          - ''
+          - "$ex 'G' + ~~vars.radar_min_gate + ' - G' + ~~vars.radar_max_gate"
+        marker:
+          color:
+            - "#00000000"
+            - "[[gate_min_max_bar_color]]"
+        x:
+          - $ex vars.min_gate;
+          - $ex vars.max_gate - vars.min_gate;
+        "y":
+          - Min/Max Gate
+          - Min/Max Gate
+      #########################
+      # Radar Target Detected #
+      #########################
+      - entity: ""
+        visible: $ex vars.show_radar_targets
+        text:
+          - ""
+          - "Detected"
+          - ""
+          - "Moving"
+          - ""
+          - "Still"
+        insidetextanchor: "start"
+        marker:
+          color:
+            - "#00000000"
+            - "#000000E6"
+            - "#00000000"
+            - "#000000E6"
+            - "#00000000"
+            - "#000000E6"
+        x:
+          - $ex vars.radar_target_spacer_size
+          - $ex vars.radar_target_size
+          - $ex vars.radar_target_spacer_size
+          - $ex vars.radar_target_size
+          - $ex vars.radar_target_spacer_size
+          - $ex vars.radar_target_size
+        "y":
+          - Target
+          - Target
+          - Target
+          - Target
+          - Target
+          - Target
+      - entity: ""
+        visible: $ex vars.show_radar_targets
+        type: scatter
+        mode: markers
+        marker:
+          color: "#FFFFFFFF"
+          symbol:
+            - $ex vars.radar_target_occupied_symbol
+            - $ex vars.radar_target_moving_occupied_symbol
+            - $ex vars.radar_target_still_occupied_symbol
+          size: $ex vars.marker_symbol_size
+        x:
+          - $ex (vars.radar_target_spacer_size + vars.radar_target_size - vars.radar_target_marker_offset);
+          - $ex (vars.radar_target_spacer_size * 2 + vars.radar_target_size * 2 - vars.radar_target_marker_offset);
+          - $ex (vars.radar_target_spacer_size * 3 + vars.radar_target_size * 3 - vars.radar_target_marker_offset);
+        "y":
+          - Target
+          - Target
+          - Target
+    layout:
+      height: $ex vars.layout_height
+      dragmode: false
+      hovermode: false
+      barmode: relative
+      margin:
+        t: $ex vars.layout_margin_t
+        l: 75
+        r: 30
+        b: $ex vars.layout_margin_b
+      yaxis:
+        tickangle: -30
+        showgrid: false
+      xaxis:
+        dtick: $ex (vars.max_detection_range / 13);
+        ticksuffix: $ex ' ' + vars.chart_uom
+        tickangle: 60
+        fixedrange: true
+        range:
+          - 0
+          - $ex vars.max_detection_range * 1.004;
+    config:
+      displayModeBar: false
+      disablePinchToZoom: true

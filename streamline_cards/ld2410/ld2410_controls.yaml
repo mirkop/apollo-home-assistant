@@ -1,0 +1,17 @@
+ld2410_controls:
+  default:
+    device_title: LD2410
+  card:
+    type: entities
+    title: "[[device_title]] Controls"
+    entities:
+      - entity: switch.[[device_base_name]]_radar_engineering_mode
+        name: Radar Engineering Mode
+      - entity: switch.[[device_base_name]]_ld2410_bluetooth
+        name: LD2410 Bluetooth
+      - entity: button.[[device_base_name]]_restart_radar
+        name: Restart Radar
+      - entity: button.[[device_base_name]]_factory_reset_radar
+        name: Factory Reset Radar
+      - entity: button.[[device_base_name]]_esp_reboot
+        name: ESP Reboot

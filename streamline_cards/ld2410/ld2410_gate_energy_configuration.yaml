@@ -1,0 +1,47 @@
+ld2410_gate_energy_configuration:
+  default:
+    device_title: LD2410
+  card:
+    type: entities
+    title: "[[device_title]] Gate Config"
+    entities:
+      - entity: number.[[device_base_name]]_radar_max_move_distance
+        name: Max Move Gate
+      - entity: number.[[device_base_name]]_radar_max_still_distance
+        name: Max Still Gate
+      - entity: number.[[device_base_name]]_g0_move_threshold
+        name: G0 move threshold
+      - entity: number.[[device_base_name]]_g0_still_threshold
+        name: G0 still threshold
+      - entity: number.[[device_base_name]]_g1_move_threshold
+        name: G1 move threshold
+      - entity: number.[[device_base_name]]_g1_still_threshold
+        name: G1 still threshold
+      - entity: number.[[device_base_name]]_g2_move_threshold
+        name: G2 move threshold
+      - entity: number.[[device_base_name]]_g2_still_threshold
+        name: G2 still threshold
+      - entity: number.[[device_base_name]]_g3_move_threshold
+        name: G3 move threshold
+      - entity: number.[[device_base_name]]_g3_still_threshold
+        name: G3 still threshold
+      - entity: number.[[device_base_name]]_g4_move_threshold
+        name: G4 move threshold
+      - entity: number.[[device_base_name]]_g4_still_threshold
+        name: G4 still threshold
+      - entity: number.[[device_base_name]]_g5_move_threshold
+        name: G5 move threshold
+      - entity: number.[[device_base_name]]_g5_still_threshold
+        name: G5 still threshold
+      - entity: number.[[device_base_name]]_g6_move_threshold
+        name: G6 move threshold
+      - entity: number.[[device_base_name]]_g6_still_threshold
+        name: G6 still threshold
+      - entity: number.[[device_base_name]]_g7_move_threshold
+        name: G7 move threshold
+      - entity: number.[[device_base_name]]_g7_still_threshold
+        name: G7 still threshold
+      - entity: number.[[device_base_name]]_g8_move_threshold
+        name: G8 move threshold
+      - entity: number.[[device_base_name]]_g8_still_threshold
+        name: G8 still threshold

@@ -1,0 +1,17 @@
+ld2410_occupancy_history:
+  default:
+    device_title: LD2410
+    hours_to_show: 1
+  card:
+    type: history-graph
+    title: "[[device_title]] Occupancy History"
+    hours_to_show: '[[hours_to_show]]'
+    entities:
+      - entity: binary_sensor.[[device_base_name]]_radar_target
+        name: Detected
+      - entity: binary_sensor.[[device_base_name]]_radar_zone_1_occupancy
+        name: Zone 1
+      - entity: binary_sensor.[[device_base_name]]_radar_zone_2_occupancy
+        name: Zone 2
+      - entity: binary_sensor.[[device_base_name]]_radar_zone_3_occupancy
+        name: Zone 3
