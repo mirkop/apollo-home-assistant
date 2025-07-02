@@ -1,0 +1,125 @@
+blueprint:
+  name: LD2410 Automations
+  description: >
+    Turns off specified switches after a set period, with an optional notification prompting
+    the user at mid-duration to turn off immediately or wait until timeout.
+  domain: automation
+  input:
+    switch_entities:
+      name: Switch Entities
+      description: The switches to control.
+      selector:
+        entity:
+          domain: switch
+          multiple: true
+    notify_mobile_app:
+      name: Notify Mobile App Service
+      description: >
+        Enter the notify service for your mobile app (e.g., notify.mobile_app_pixel_fold).
+        To find the notify service, go to Developer Tools > Actions in Home Assistant,
+        and select the service that starts with "notify.mobile_app_".
+      default: notify.mobile_app
+      selector:
+        text:
+    total_minutes_on:
+      name: Total Minutes On
+      description: Total number of minutes the switches will remain on before auto-off.
+      default: 30
+      selector:
+        number:
+          min: 1
+          max: 60
+          step: 1
+    reminder_delay_minutes:
+      name: Reminder Delay (minutes)
+      description: The minutes before sending a reminder notification. Set to 0 to skip notifications.
+      default: 15
+      selector:
+        number:
+          min: 0
+          max: 60
+          step: 1
+
+trigger:
+  - platform: state
+    entity_id: !input switch_entities
+    to: "on"
+
+variables:
+  total_minutes_on: !input total_minutes_on
+  reminder_delay_minutes: !input reminder_delay_minutes
+
+action:
+  - alias: Wait before sending notification reminder (skip if delay is 0)
+    choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ reminder_delay_minutes | int > 0 }}"
+        sequence:
+          - delay:
+              minutes: "{{ reminder_delay_minutes }}"
+    default: []
+
+  - alias: Notify user to request immediate switch-off (skip if delay is 0)
+    choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ reminder_delay_minutes | int > 0 }}"
+        sequence:
+          - service: !input notify_mobile_app
+            data:
+              title: Radar Engineering Mode Reminder
+              message: >
+                {{ trigger.to_state.attributes.friendly_name }} has been ON for {{ reminder_delay_minutes }} minutes. Turn it off now?
+              data:
+                actions:
+                  - action: TURN_OFF_NOW
+                    title: Yes, Turn Off
+                  - action: KEEP_ON
+                    title: No, Keep On
+    default: []
+
+  - alias: Wait for user notification response or remaining time
+    wait_for_trigger:
+      - platform: event
+        event_type: mobile_app_notification_action
+        event_data:
+          action: TURN_OFF_NOW
+      - platform: event
+        event_type: mobile_app_notification_action
+        event_data:
+          action: KEEP_ON
+    timeout:
+      minutes: "{{ (total_minutes_on | int) - (reminder_delay_minutes | int) }}"
+    continue_on_timeout: true
+
+  - alias: Handle user response (Notification Action) or timeout
+    choose:
+      - conditions:
+          - condition: template
+            value_template: >-
+              {{ wait.trigger is defined and wait.trigger.event.data.action == 'TURN_OFF_NOW' }}
+        sequence:
+          - alias: Immediately turn off switch
+            service: switch.turn_off
+            target:
+              entity_id: "{{ trigger.entity_id }}"
+      - conditions:
+          - condition: template
+            value_template: >-
+              {{ wait.trigger is defined and wait.trigger.event.data.action == 'KEEP_ON' }}
+        sequence:
+          - alias: User chose keep on; wait remaining duration
+            delay:
+              minutes: "{{ (total_minutes_on | int) - (reminder_delay_minutes | int) }}"
+          - alias: Now auto-shutdown switch after total timeout
+            service: switch.turn_off
+            target:
+              entity_id: "{{ trigger.entity_id }}"
+    default:
+      - alias: User didn't respond; auto-switch off at total timeout
+        service: switch.turn_off
+        target:
+          entity_id: "{{ trigger.entity_id }}"
+
+mode: parallel
