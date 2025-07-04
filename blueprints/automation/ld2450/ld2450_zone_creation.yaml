@@ -55,6 +55,8 @@ blueprint:
 
 mode: single
 
+trigger: []
+
 variables:
   x_entity: !input x_entity
   y_entity: !input y_entity
