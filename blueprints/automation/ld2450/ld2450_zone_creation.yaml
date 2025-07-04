@@ -50,16 +50,16 @@ variables:
   zone_x2: "number.{{ device_base_name }}_zone_{{ zone }}_x2"
   zone_y1: "number.{{ device_base_name }}_zone_{{ zone }}_y1"
   zone_y2: "number.{{ device_base_name }}_zone_{{ zone }}_y2"
-  multi_switch: !input multi_target_switch
+  multi_switch: "switch.{{ device_base_name }}_multi_target_tracking"
   duration: !input duration
   padding: !input padding
 
 action:
-  - alias: "Store current multi-target state and switch to single target mode (if switch provided)"
+  - alias: "Store current multi-target state and switch to single target mode (if switch exists)"
     choose:
       - conditions:
           - condition: template
-            value_template: "{{ multi_switch != '' }}"
+            value_template: "{{ multi_switch in states and state_attr(multi_switch, 'friendly_name') is defined }}"
         sequence:
           - variables:
               prev_multi_state: "{{ states(multi_switch) }}"
@@ -112,11 +112,11 @@ action:
         data:
           entity_id: "{{ zone_y2 }}"
           value: "{{ [[max_y, 0] | max, 7560.0] | min }}"
-  - alias: "Restore previous multi-target state (if switch provided)"
+  - alias: "Restore previous multi-target state (if switch exists)"
     choose:
       - conditions:
           - condition: template
-            value_template: "{{ multi_switch != '' and prev_multi_state is defined and prev_multi_state == 'on' }}"
+            value_template: "{{ multi_switch in states and prev_multi_state is defined and prev_multi_state == 'on' }}"
         sequence:
           - service: switch.turn_on
             target:
