@@ -13,7 +13,7 @@ blueprint:
     duration:
       name: Collection Duration (seconds)
       description: How long to collect X/Y data for zone creation.
-      default: 60
+      default: 15
       selector:
         number:
           min: 10
