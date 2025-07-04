@@ -103,22 +103,22 @@ action:
                 x_values: "{{ x_values + [x] }}"
                 y_values: "{{ y_values + [y] }}"
         - delay: 1
-  - alias: "Filter outliers using standard deviation"
-    variables:
-      x_mean: "{{ x_values | average(0) }}"
-      y_mean: "{{ y_values | average(0) }}"
-      x_std: "{{ (x_values | map('abs', x_mean) | average(0)) | float }}"
-      y_std: "{{ (y_values | map('abs', y_mean) | average(0)) | float }}"
-      filtered_x: >
-        {{ [v for v in x_values if (x_mean - 2 * x_std) <= v <= (x_mean + 2 * x_std)] }}
-      filtered_y: >
-        {{ [v for v in y_values if (y_mean - 2 * y_std) <= v <= (y_mean + 2 * y_std)] }}
+  # - alias: "Filter outliers using standard deviation"
+  #   variables:
+  #     x_mean: "{{ x_values | average(0) }}"
+  #     y_mean: "{{ y_values | average(0) }}"
+  #     x_std: "{{ (x_values | map('abs', x_mean) | average(0)) | float }}"
+  #     y_std: "{{ (y_values | map('abs', y_mean) | average(0)) | float }}"
+  #     filtered_x: >
+  #       {{ [v for v in x_values if (x_mean - 2 * x_std) <= v <= (x_mean + 2 * x_std)] }}
+  #     filtered_y: >
+  #       {{ [v for v in y_values if (y_mean - 2 * y_std) <= v <= (y_mean + 2 * y_std)] }}
   - alias: "Calculate min/max and apply padding"
     variables:
-      min_x: "{{ (filtered_x | length > 0 and (filtered_x | min) or 0) - padding }}"
-      max_x: "{{ (filtered_x | length > 0 and (filtered_x | max) or 0) + padding }}"
-      min_y: "{{ (filtered_y | length > 0 and (filtered_y | min) or 0) - padding }}"
-      max_y: "{{ (filtered_y | length > 0 and (filtered_y | max) or 0) + padding }}"
+      min_x: "{{ (x_values | length > 0 and (x_values | min) or 0) - padding }}"
+      max_x: "{{ (x_values | length > 0 and (x_values | max) or 0) + padding }}"
+      min_y: "{{ (y_values | length > 0 and (y_values | min) or 0) - padding }}"
+      max_y: "{{ (y_values | length > 0 and (y_values | max) or 0) + padding }}"
   - alias: "Set zone coordinates"
     sequence:
       - service: number.set_value
