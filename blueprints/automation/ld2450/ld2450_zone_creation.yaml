@@ -85,12 +85,12 @@ action:
     variables:
       x_values: []
       y_values: []
-      start_time: "{{ now() }}"
+      start_time: "{{ now().timestamp() }}"
   - alias: "Collect X/Y data for duration"
     repeat:
       while:
         - condition: template
-          value_template: "{{ (now() - start_time).total_seconds() < duration }}"
+          value_template: "{{ (now().timestamp() - start_time) < duration }}"
       sequence:
         - variables:
             x: "{{ states(x_entity) | float(0) }}"
