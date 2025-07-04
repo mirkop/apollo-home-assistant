@@ -1,0 +1,148 @@
+blueprint:
+  name: LD2450 Zone Creation
+  description: >
+    Create a zone for the LD2450 radar sensor (Apollo MTR-1/R-PRO-1) by collecting X/Y position data for a target over a set duration. Automatically handles single target mode, outlier filtering, and provides a summary of the created zone.
+  domain: automation
+  input:
+    ld2450_entity:
+      name: LD2450 Sensor Entity
+      description: The LD2450 sensor entity to use for data collection.
+      selector:
+        entity:
+          integration: ld2450
+    multi_target_switch:
+      name: Multi-Target Tracking Switch (MTR-1 only)
+      description: >
+        (Optional) The switch entity to control multi-target tracking. Only needed for MTR-1. Leave blank for R-PRO-1.
+      default: ""
+      selector:
+        entity:
+          domain: switch
+          multiple: false
+          include_entities:
+            - switch.apollo_mtr_1_f829a0_multi_target_tracking
+    zone_number:
+      name: Zone Number
+      description: Which zone to set (1, 2, or 3)
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 3
+          step: 1
+    duration:
+      name: Collection Duration (seconds)
+      description: How long to collect X/Y data for zone creation.
+      default: 60
+      selector:
+        number:
+          min: 10
+          max: 300
+          step: 1
+    padding:
+      name: Padding (mm)
+      description: Padding to add to the zone boundaries (in mm).
+      default: 100
+      selector:
+        number:
+          min: 0
+          max: 1000
+          step: 10
+
+mode: single
+
+variables:
+  entity: !input ld2450_entity
+  multi_switch: !input multi_target_switch
+  zone: !input zone_number
+  duration: !input duration
+  padding: !input padding
+
+action:
+  - alias: "Store current multi-target state and switch to single target mode (if switch provided)"
+    choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ multi_switch != '' }}"
+        sequence:
+          - variables:
+              prev_multi_state: "{{ states(multi_switch) }}"
+          - service: switch.turn_off
+            target:
+              entity_id: "{{ multi_switch }}"
+  - alias: "Initialize data collection"
+    variables:
+      x_values: []
+      y_values: []
+      start_time: "{{ now() }}"
+  - alias: "Collect X/Y data for duration"
+    repeat:
+      while:
+        - condition: template
+          value_template: "{{ (now() - start_time).total_seconds() < duration }}"
+      sequence:
+        - variables:
+            x: "{{ state_attr(entity, 'target_x') }}"
+            y: "{{ state_attr(entity, 'target_y') }}"
+        - if:
+            - condition: template
+              value_template: "{{ x is number and y is number }}"
+          then:
+            - variables:
+                x_values: "{{ x_values + [x] }}"
+                y_values: "{{ y_values + [y] }}"
+        - delay: 1
+  - alias: "Filter outliers using standard deviation"
+    variables:
+      x_mean: "{{ x_values | average }}"
+      y_mean: "{{ y_values | average }}"
+      x_std: "{{ (x_values | map('abs', x_mean) | average) | float }}"
+      y_std: "{{ (y_values | map('abs', y_mean) | average) | float }}"
+      filtered_x: "{{ x_values | select('abs_diff', x_mean, x_std*2) | list }}"
+      filtered_y: "{{ y_values | select('abs_diff', y_mean, y_std*2) | list }}"
+  - alias: "Calculate min/max and apply padding"
+    variables:
+      min_x: "{{ (filtered_x | min(default=0)) - padding }}"
+      max_x: "{{ (filtered_x | max(default=0)) + padding }}"
+      min_y: "{{ (filtered_y | min(default=0)) - padding }}"
+      max_y: "{{ (filtered_y | max(default=0)) + padding }}"
+  - alias: "Set zone coordinates"
+    sequence:
+      - service: number.set_value
+        data:
+          entity_id: "number.apollo_r_pro_1_w_3542ec_ld2450_zone_{{ zone }}_x1"
+          value: "{{ min_x }}"
+      - service: number.set_value
+        data:
+          entity_id: "number.apollo_r_pro_1_w_3542ec_ld2450_zone_{{ zone }}_x2"
+          value: "{{ max_x }}"
+      - service: number.set_value
+        data:
+          entity_id: "number.apollo_r_pro_1_w_3542ec_ld2450_zone_{{ zone }}_y1"
+          value: "{{ min_y }}"
+      - service: number.set_value
+        data:
+          entity_id: "number.apollo_r_pro_1_w_3542ec_ld2450_zone_{{ zone }}_y2"
+          value: "{{ max_y }}"
+  - alias: "Restore previous multi-target state (if switch provided)"
+    choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ multi_switch != '' and prev_multi_state is defined and prev_multi_state == 'on' }}"
+        sequence:
+          - service: switch.turn_on
+            target:
+              entity_id: "{{ multi_switch }}"
+  - alias: "Send summary notification"
+    service: persistent_notification.create
+    data:
+      title: "LD2450 Zone Created"
+      message: >
+        Zone {{ zone }} created for {{ entity }}.\n
+        X1: {{ min_x }}\n
+        Y1: {{ min_y }}\n
+        X2: {{ max_x }}\n
+        Y2: {{ max_y }}\n
+        Padding: {{ padding }} mm\n
+        Duration: {{ duration }} seconds\n
+        (Outliers filtered using standard deviation method.)
