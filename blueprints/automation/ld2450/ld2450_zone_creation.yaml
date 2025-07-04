@@ -4,18 +4,12 @@ blueprint:
     Create a zone for the LD2450 radar sensor (Apollo MTR-1/R-PRO-1) by collecting X/Y position data for a target over a set duration. Automatically handles single target mode, outlier filtering, and provides a summary of the created zone.
   domain: automation
   input:
-    x_entity:
-      name: Target 1 X Sensor
-      description: The sensor entity for target 1 X value.
+    zone_x1_entity:
+      name: Zone X1 Number Entity
+      description: Select the X1 number entity for the zone you want to set.
       selector:
         entity:
-          domain: sensor
-    y_entity:
-      name: Target 1 Y Sensor
-      description: The sensor entity for target 1 Y value.
-      selector:
-        entity:
-          domain: sensor
+          domain: number
     multi_target_switch:
       name: Multi-Target Tracking Switch (MTR-1 only)
       description: >
@@ -25,15 +19,6 @@ blueprint:
         entity:
           domain: switch
           multiple: false
-    zone_number:
-      name: Zone Number
-      description: Which zone to set (1, 2, or 3)
-      default: 1
-      selector:
-        number:
-          min: 1
-          max: 3
-          step: 1
     duration:
       name: Collection Duration (seconds)
       description: How long to collect X/Y data for zone creation.
@@ -55,17 +40,17 @@ blueprint:
 
 mode: single
 
-trigger:
-  - platform: state
-    entity_id: input_button.ld2450_zone_create
-  - platform: event
-    event_type: ld2450_zone_create
-
 variables:
-  x_entity: !input x_entity
-  y_entity: !input y_entity
+  zone_x1_entity: !input zone_x1_entity
+  device_base_name: "{{ zone_x1_entity.split('_zone_')[0].split('number.')[1] }}"
+  zone: "{{ zone_x1_entity.split('_zone_')[1].split('_')[0] }}"
+  x_entity: "sensor.{{ device_base_name }}_target_1_x"
+  y_entity: "sensor.{{ device_base_name }}_target_1_y"
+  zone_x1: "number.{{ device_base_name }}_zone_{{ zone }}_x1"
+  zone_x2: "number.{{ device_base_name }}_zone_{{ zone }}_x2"
+  zone_y1: "number.{{ device_base_name }}_zone_{{ zone }}_y1"
+  zone_y2: "number.{{ device_base_name }}_zone_{{ zone }}_y2"
   multi_switch: !input multi_target_switch
-  zone: !input zone_number
   duration: !input duration
   padding: !input padding
 
@@ -103,16 +88,6 @@ action:
                 x_values: "{{ x_values + [x] }}"
                 y_values: "{{ y_values + [y] }}"
         - delay: 1
-  # - alias: "Filter outliers using standard deviation"
-  #   variables:
-  #     x_mean: "{{ x_values | average(0) }}"
-  #     y_mean: "{{ y_values | average(0) }}"
-  #     x_std: "{{ (x_values | map('abs', x_mean) | average(0)) | float }}"
-  #     y_std: "{{ (y_values | map('abs', y_mean) | average(0)) | float }}"
-  #     filtered_x: >
-  #       {{ [v for v in x_values if (x_mean - 2 * x_std) <= v <= (x_mean + 2 * x_std)] }}
-  #     filtered_y: >
-  #       {{ [v for v in y_values if (y_mean - 2 * y_std) <= v <= (y_mean + 2 * y_std)] }}
   - alias: "Calculate min/max and apply padding"
     variables:
       min_x: "{{ (x_values | length > 0 and (x_values | min) or 0) - padding }}"
@@ -123,19 +98,19 @@ action:
     sequence:
       - service: number.set_value
         data:
-          entity_id: "number.apollo_r_pro_1_w_3542ec_ld2450_zone_{{ zone }}_x1"
+          entity_id: "{{ zone_x1 }}"
           value: "{{ [[min_x, -4860.0] | max, 4860.0] | min }}"
       - service: number.set_value
         data:
-          entity_id: "number.apollo_r_pro_1_w_3542ec_ld2450_zone_{{ zone }}_x2"
+          entity_id: "{{ zone_x2 }}"
           value: "{{ [[max_x, -4860.0] | max, 4860.0] | min }}"
       - service: number.set_value
         data:
-          entity_id: "number.apollo_r_pro_1_w_3542ec_ld2450_zone_{{ zone }}_y1"
+          entity_id: "{{ zone_y1 }}"
           value: "{{ [[min_y, 0] | max, 7560.0] | min }}"
       - service: number.set_value
         data:
-          entity_id: "number.apollo_r_pro_1_w_3542ec_ld2450_zone_{{ zone }}_y2"
+          entity_id: "{{ zone_y2 }}"
           value: "{{ [[max_y, 0] | max, 7560.0] | min }}"
   - alias: "Restore previous multi-target state (if switch provided)"
     choose:
@@ -158,4 +133,3 @@ action:
         Y2: {{ max_y }}\n
         Padding: {{ padding }} mm\n
         Duration: {{ duration }} seconds\n
-        (Outliers filtered using standard deviation method.)
