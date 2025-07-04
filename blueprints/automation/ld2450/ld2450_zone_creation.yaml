@@ -31,6 +31,12 @@ blueprint:
 
 mode: single
 
+trigger:
+  - platform: state
+    entity_id: input_button.ld2450_zone_create
+  - platform: event
+    event_type: ld2450_zone_create
+
 variables:
   zone_x1_entity: !input zone_x1_entity
   device_base_name: "{{ zone_x1_entity.split('_zone_')[0].split('number.')[1] }}"
