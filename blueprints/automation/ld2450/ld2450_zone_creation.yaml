@@ -113,10 +113,10 @@ action:
       filtered_y: "{{ y_values | select('abs_diff', y_mean, y_std*2) | list }}"
   - alias: "Calculate min/max and apply padding"
     variables:
-      min_x: "{{ (filtered_x | min(default=0)) - padding }}"
-      max_x: "{{ (filtered_x | max(default=0)) + padding }}"
-      min_y: "{{ (filtered_y | min(default=0)) - padding }}"
-      max_y: "{{ (filtered_y | max(default=0)) + padding }}"
+      min_x: "{{ (filtered_x | length > 0 and (filtered_x | min) or 0) - padding }}"
+      max_x: "{{ (filtered_x | length > 0 and (filtered_x | max) or 0) + padding }}"
+      min_y: "{{ (filtered_y | length > 0 and (filtered_y | min) or 0) - padding }}"
+      max_y: "{{ (filtered_y | length > 0 and (filtered_y | max) or 0) + padding }}"
   - alias: "Set zone coordinates"
     sequence:
       - service: number.set_value
