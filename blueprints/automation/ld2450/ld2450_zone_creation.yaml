@@ -55,7 +55,11 @@ blueprint:
 
 mode: single
 
-trigger: []
+trigger:
+  - platform: state
+    entity_id: input_button.ld2450_zone_create
+  - platform: event
+    event_type: ld2450_zone_create
 
 variables:
   x_entity: !input x_entity
