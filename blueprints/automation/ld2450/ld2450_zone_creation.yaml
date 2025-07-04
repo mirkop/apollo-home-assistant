@@ -10,15 +10,6 @@ blueprint:
       selector:
         entity:
           domain: number
-    multi_target_switch:
-      name: Multi-Target Tracking Switch (MTR-1 only)
-      description: >
-        (Optional) The switch entity to control multi-target tracking. Only needed for MTR-1. Leave blank for R-PRO-1.
-      default: ""
-      selector:
-        entity:
-          domain: switch
-          multiple: false
     duration:
       name: Collection Duration (seconds)
       description: How long to collect X/Y data for zone creation.
