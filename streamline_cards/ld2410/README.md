@@ -1,6 +1,6 @@
 # LD2410 Streamline Cards
 
-This directory contains Home Assistant YAML card configurations for the LD2410 radar sensor. Each file provides a reusable card or chart for visualizing and controlling device features. Template variables like `device_title` and `device_base_name` should be assigned with actual device values.
+This directory contains Home Assistant YAML card configurations for the LD2410 radar sensor. Each file provides a reusable card or chart for visualizing and controlling device features. Template variables like `device_title` and `device_base_name` should be assigned actual device values.
 
 ---
 
@@ -25,8 +25,10 @@ Make sure all dependencies are installed and up to date in your Home Assistant i
 
 Variables listed in the `default` section of each YAML file are optional. If omitted, the following default values will be used:
 
+The device_base_name should be set to the entity base name. Find the name of the device entity you want to use with the cards. You will only need the base name of the entity. You can find the entity's name by visiting the ESPHome Integration and getting its full name. Example: if the full name is 'switch.apollo_msr_2_bada55_radar_engineering_mode', 'apollo_msr_2_bada55' is the base name of that entity that you will use with the cards.
+
 ### ld2410_controls.yaml
-- device_title: The display name for the device (default: "LD2410").
+- device_title: The display name for the device (default: "LD2410 Controls").
 - device_base_name: The base name used for all entity IDs related to the device (no default; must be set per device).
 
 ### ld2410_distances_chart.yaml
@@ -71,31 +73,6 @@ Variables listed in the `default` section of each YAML file are optional. If omi
 
 ---
 
-## Streamline Variables (All Files)
-
-The following variables are used as placeholders in the YAML files. Replace them with your actual values as needed (do not include the square brackets):
-
-- device_title: The display name for the device (e.g., "LD2410").
-- device_base_name: The base name used for all entity IDs related to the device (e.g., `sensor.livingroom_ld2410`).
-- move_bar_color: Color for the movement bar in charts (e.g., `#4b0082`).
-- still_bar_color: Color for the stillness bar in charts (e.g., `#274e13`).
-- detection_bar_color: Color for the detection bar in charts (e.g., `#8b0000`).
-- show_radar_targets: Boolean to show/hide radar target markers (e.g., `true`).
-- show_zones: Boolean to show/hide zone bars and occupancy (e.g., `true`).
-- show_distance: Boolean to show/hide distance bars (e.g., `true`).
-- show_gates: Boolean to show/hide gate bars (e.g., `true`).
-- show_max_gates: Boolean to show/hide max gate bars (e.g., `true`).
-- bar_size: Size of bars in the chart (e.g., `35`).
-- chart_unit_of_measurement: Unit of measurement for the chart (e.g., `cm`, `mm`, `m`, `in`, `ft`, `yd`, or `input_entity`).
-- chart_unit_of_measurement_entity: Entity ID to use for dynamic unit selection (e.g., `input_select.ld2410_distances_chart_unit_of_measurement`).
-- move_threshold_color: Color for the movement threshold line (gate energy chart).
-- still_threshold_color: Color for the stillness threshold line (gate energy chart).
-- hours_to_show: Number of hours to show in the history graph.
-
-These variables allow you to easily customize the cards for different devices and preferences.
-
----
-
 ## ld2410_controls.yaml
 
 Defines an entities card for controlling the LD2410 device, including:
@@ -105,6 +82,11 @@ Defines an entities card for controlling the LD2410 device, including:
 - Restart Radar (button)
 - Factory Reset Radar (button)
 - ESP Reboot (button)
+
+### ld2410_controls.yaml Variables
+
+- device_title: The display name for the device (e.g., "LD2410").
+- device_base_name: The base name used for all entity IDs related to the device (e.g., `sensor.livingroom_ld2410`).
 
 ---
 
@@ -117,6 +99,22 @@ Configures a custom Plotly graph card to visualize distance data from the LD2410
 - Unit of measurement selection via an input entity
 - Advanced initialization and utility functions for dynamic charting
 
+### ld2410_distances_chart.yaml Variables
+
+- device_title: The display name for the device (e.g., "LD2410").
+- device_base_name: The base name used for all entity IDs related to the device.
+- move_bar_color: Color for the movement bar in charts (e.g., `#4b0082`).
+- still_bar_color: Color for the stillness bar in charts (e.g., `#274e13`).
+- detection_bar_color: Color for the detection bar in charts (e.g., `#8b0000`).
+- show_radar_targets: Boolean to show/hide radar target markers (e.g., `true`).
+- show_zones: Boolean to show/hide zone bars and occupancy (e.g., `true`).
+- show_distance: Boolean to show/hide distance bars (e.g., `true`).
+- show_gates: Boolean to show/hide gate bars (e.g., `true`).
+- show_max_gates: Boolean to show/hide max gate bars (e.g., `true`).
+- bar_size: Size of bars in the chart (e.g., `35`).
+- chart_unit_of_measurement: Unit of measurement for the chart (e.g., `cm`, `mm`, `m`, `in`, `ft`, `yd`, or `input_entity`).
+- chart_unit_of_measurement_entity: Entity ID to use for dynamic unit selection (e.g., `input_select.ld2410_distances_chart_unit_of_measurement`).
+
 ---
 
 ## ld2410_gate_energy_chart.yaml
@@ -127,6 +125,15 @@ Provides a custom Plotly graph card to display gate energy data:
 - Customizable colors for bars and thresholds
 - Includes utility functions for fetching and validating entity states
 
+### ld2410_gate_energy_chart.yaml Variables
+
+- device_title: The display name for the device (e.g., "LD2410").
+- device_base_name: The base name used for all entity IDs related to the device.
+- move_bar_color: Color for the movement bar in charts (e.g., `#4b0082`).
+- move_threshold_color: Color for the movement threshold line (e.g., `#9467bd`).
+- still_bar_color: Color for the stillness bar in charts (e.g., `#274e13`).
+- still_threshold_color: Color for the stillness threshold line (e.g., `#8cb640`).
+
 ---
 
 ## ld2410_gate_energy_configuration.yaml
@@ -135,6 +142,11 @@ Entities card for configuring gate energy thresholds and maximum gate distances:
 
 - Max Move/Still Gate settings
 - Move/Still threshold settings for gates G0–G7
+
+### ld2410_gate_energy_configuration.yaml Variables
+
+- device_title: The display name for the device (e.g., "LD2410").
+- device_base_name: The base name used for all entity IDs related to the device.
 
 ---
 
@@ -145,6 +157,12 @@ History graph card showing recent occupancy detection:
 - Displays detection and occupancy for up to three zones
 - Configurable time window (`hours_to_show`)
 
+### ld2410_occupancy_history.yaml Variables
+
+- device_title: The display name for the device (e.g., "LD2410").
+- device_base_name: The base name used for all entity IDs related to the device.
+- hours_to_show: Number of hours to show in the history graph.
+
 ---
 
 ## ld2410_zone_configuration.yaml
@@ -154,6 +172,11 @@ Entities card for configuring radar zone boundaries and timeout:
 - Radar Timeout
 - Start and end positions for zones 1–3
 
+### ld2410_zone_configuration.yaml Variables
+
+- device_title: The display name for the device (e.g., "LD2410").
+- device_base_name: The base name used for all entity IDs related to the device.
+
 ---
 
 ## ld2410_zone_occupancy.yaml
@@ -162,6 +185,11 @@ Entities card for monitoring target and zone occupancy:
 
 - Radar Target, Moving Target, Still Target
 - Occupancy status for zones 1–3
+
+### ld2410_zone_occupancy.yaml Variables
+
+- device_title: The display name for the device (e.g., "LD2410").
+- device_base_name: The base name used for all entity IDs related to the device.
 
 ---
 

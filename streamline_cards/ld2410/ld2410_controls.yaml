@@ -1,9 +1,9 @@
 ld2410_controls:
   default:
-    device_title: LD2410
+    device_title: LD2410  Controls
   card:
     type: entities
-    title: "[[device_title]] Controls"
+    title: "[[device_title]]"
     entities:
       - entity: switch.[[device_base_name]]_radar_engineering_mode
         name: Radar Engineering Mode
