@@ -48,11 +48,25 @@ blueprint:
           min: 0
           max: 1000
           step: 10
+    x_entity:
+      name: Target 1 X Sensor
+      description: The sensor entity for target 1 X value.
+      selector:
+        entity:
+          domain: sensor
+    y_entity:
+      name: Target 1 Y Sensor
+      description: The sensor entity for target 1 Y value.
+      selector:
+        entity:
+          domain: sensor
 
 mode: single
 
 variables:
   entity: !input ld2450_entity
+  x_entity: !input x_entity
+  y_entity: !input y_entity
   multi_switch: !input multi_target_switch
   zone: !input zone_number
   duration: !input duration
@@ -82,8 +96,8 @@ action:
           value_template: "{{ (now() - start_time).total_seconds() < duration }}"
       sequence:
         - variables:
-            x: "{{ state_attr(entity, 'target_x') }}"
-            y: "{{ state_attr(entity, 'target_y') }}"
+            x: "{{ states(x_entity) | float(0) }}"
+            y: "{{ states(y_entity) | float(0) }}"
         - if:
             - condition: template
               value_template: "{{ x is number and y is number }}"
