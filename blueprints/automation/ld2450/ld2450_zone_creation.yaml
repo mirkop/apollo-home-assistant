@@ -109,8 +109,10 @@ action:
       y_mean: "{{ y_values | average(0) }}"
       x_std: "{{ (x_values | map('abs', x_mean) | average(0)) | float }}"
       y_std: "{{ (y_values | map('abs', y_mean) | average(0)) | float }}"
-      filtered_x: "{{ x_values | select('abs_diff', x_mean, x_std*2) | list }}"
-      filtered_y: "{{ y_values | select('abs_diff', y_mean, y_std*2) | list }}"
+      filtered_x: >
+        {{ x_values | select('number') | select('float') | selectattr('', '>=', x_mean - 2 * x_std) | selectattr('', '<=', x_mean + 2 * x_std) | list }}
+      filtered_y: >
+        {{ y_values | select('number') | select('float') | selectattr('', '>=', y_mean - 2 * y_std) | selectattr('', '<=', y_mean + 2 * y_std) | list }}
   - alias: "Calculate min/max and apply padding"
     variables:
       min_x: "{{ (filtered_x | length > 0 and (filtered_x | min) or 0) - padding }}"
