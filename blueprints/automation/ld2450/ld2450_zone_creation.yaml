@@ -122,19 +122,19 @@ action:
       - service: number.set_value
         data:
           entity_id: "number.apollo_r_pro_1_w_3542ec_ld2450_zone_{{ zone }}_x1"
-          value: "{{ min_x }}"
+          value: "{{ [min_x, 0] | max }}"
       - service: number.set_value
         data:
           entity_id: "number.apollo_r_pro_1_w_3542ec_ld2450_zone_{{ zone }}_x2"
-          value: "{{ max_x }}"
+          value: "{{ [max_x, 0] | max }}"
       - service: number.set_value
         data:
           entity_id: "number.apollo_r_pro_1_w_3542ec_ld2450_zone_{{ zone }}_y1"
-          value: "{{ min_y }}"
+          value: "{{ [[min_y, 0] | max, 7560.0] | min }}"
       - service: number.set_value
         data:
           entity_id: "number.apollo_r_pro_1_w_3542ec_ld2450_zone_{{ zone }}_y2"
-          value: "{{ max_y }}"
+          value: "{{ [[max_y, 0] | max, 7560.0] | min }}"
   - alias: "Restore previous multi-target state (if switch provided)"
     choose:
       - conditions:
