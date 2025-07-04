@@ -4,12 +4,18 @@ blueprint:
     Create a zone for the LD2450 radar sensor (Apollo MTR-1/R-PRO-1) by collecting X/Y position data for a target over a set duration. Automatically handles single target mode, outlier filtering, and provides a summary of the created zone.
   domain: automation
   input:
-    ld2450_entity:
-      name: LD2450 Sensor Entity
-      description: The LD2450 sensor entity to use for data collection.
+    x_entity:
+      name: Target 1 X Sensor
+      description: The sensor entity for target 1 X value.
       selector:
         entity:
-          integration: ld2450
+          domain: sensor
+    y_entity:
+      name: Target 1 Y Sensor
+      description: The sensor entity for target 1 Y value.
+      selector:
+        entity:
+          domain: sensor
     multi_target_switch:
       name: Multi-Target Tracking Switch (MTR-1 only)
       description: >
@@ -19,8 +25,6 @@ blueprint:
         entity:
           domain: switch
           multiple: false
-          include_entities:
-            - switch.apollo_mtr_1_f829a0_multi_target_tracking
     zone_number:
       name: Zone Number
       description: Which zone to set (1, 2, or 3)
@@ -48,23 +52,10 @@ blueprint:
           min: 0
           max: 1000
           step: 10
-    x_entity:
-      name: Target 1 X Sensor
-      description: The sensor entity for target 1 X value.
-      selector:
-        entity:
-          domain: sensor
-    y_entity:
-      name: Target 1 Y Sensor
-      description: The sensor entity for target 1 Y value.
-      selector:
-        entity:
-          domain: sensor
 
 mode: single
 
 variables:
-  entity: !input ld2450_entity
   x_entity: !input x_entity
   y_entity: !input y_entity
   multi_switch: !input multi_target_switch
@@ -152,7 +143,7 @@ action:
     data:
       title: "LD2450 Zone Created"
       message: >
-        Zone {{ zone }} created for {{ entity }}.\n
+        Zone {{ zone }} created.\n
         X1: {{ min_x }}\n
         Y1: {{ min_y }}\n
         X2: {{ max_x }}\n
