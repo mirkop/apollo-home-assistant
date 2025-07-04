@@ -109,6 +109,12 @@ action:
       max_x: "{{ (x_values | length > 0 and (x_values | max) or 0) + padding }}"
       min_y: "{{ (y_values | length > 0 and (y_values | min) or 0) - padding }}"
       max_y: "{{ (y_values | length > 0 and (y_values | max) or 0) + padding }}"
+  - alias: "Clamp values to valid range"
+    variables:
+      min_x: "{{ [[min_x, -4860.0] | max, 4860.0] | min }}"
+      max_x: "{{ [[max_x, -4860.0] | max, 4860.0] | min }}"
+      min_y: "{{ [[min_y, 0] | max, 7560.0] | min }}"
+      max_y: "{{ [[max_y, 0] | max, 7560.0] | min }}"
   - alias: "Convert results from mm to each zone entity's uom"
     variables:
       min_x_conv: "{{ min_x / uom_to_mm[zone_x1_uom] }}"
@@ -120,19 +126,19 @@ action:
       - service: number.set_value
         data:
           entity_id: "{{ zone_x1 }}"
-          value: "{{ [[min_x_conv, -4860.0] | max, 4860.0] | min }}"
+          value: "{{ min_x_conv }}"
       - service: number.set_value
         data:
           entity_id: "{{ zone_x2 }}"
-          value: "{{ [[max_x_conv, -4860.0] | max, 4860.0] | min }}"
+          value: "{{ max_x_conv }}"
       - service: number.set_value
         data:
           entity_id: "{{ zone_y1 }}"
-          value: "{{ [[min_y_conv, 0] | max, 7560.0] | min }}"
+          value: "{{ min_y_conv }}"
       - service: number.set_value
         data:
           entity_id: "{{ zone_y2 }}"
-          value: "{{ [[max_y_conv, 0] | max, 7560.0] | min }}"
+          value: "{{ max_y_conv }}"
   - alias: "Restore previous multi-target state (if switch exists)"
     choose:
       - conditions:
