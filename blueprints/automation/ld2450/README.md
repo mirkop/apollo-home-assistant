@@ -19,7 +19,7 @@ This Home Assistant automation blueprint is designed for the LD2450 radar sensor
 ## Installation
 
 1. In Home Assistant, go to **Settings > Automations & Scenes > Blueprints**.
-2. Click **Import Blueprint** and paste the URL to this blueprint's YAML file on GitHub (e.g., `https://github.com/<your-username>/<your-repo>/blob/main/blueprints/automation/ld2450/ld2450_zone_creation.yaml`).
+2. Click **Import Blueprint** and paste the URL to this blueprint's YAML file on GitHub (e.g., `https://github.com/mirkop/<your-repo>/blob/main/blueprints/automation/ld2450/ld2450_zone_creation.yaml`).
 3. Alternatively, copy the automation YAML file into your Home Assistant `blueprints/automation/ld2450` directory.
 4. Reload automations or restart Home Assistant to detect the new blueprint.
 5. In Home Assistant, go to **Configuration > Automations & Scenes > Blueprints** and import the new blueprint.
