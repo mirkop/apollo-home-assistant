@@ -105,10 +105,10 @@ action:
         - delay: 1
   - alias: "Filter outliers using standard deviation"
     variables:
-      x_mean: "{{ x_values | average }}"
-      y_mean: "{{ y_values | average }}"
-      x_std: "{{ (x_values | map('abs', x_mean) | average) | float }}"
-      y_std: "{{ (y_values | map('abs', y_mean) | average) | float }}"
+      x_mean: "{{ x_values | average(0) }}"
+      y_mean: "{{ y_values | average(0) }}"
+      x_std: "{{ (x_values | map('abs', x_mean) | average(0)) | float }}"
+      y_std: "{{ (y_values | map('abs', y_mean) | average(0)) | float }}"
       filtered_x: "{{ x_values | select('abs_diff', x_mean, x_std*2) | list }}"
       filtered_y: "{{ y_values | select('abs_diff', y_mean, y_std*2) | list }}"
   - alias: "Calculate min/max and apply padding"
