@@ -63,20 +63,38 @@ action:
           - service: switch.turn_off
             target:
               entity_id: "{{ multi_switch }}"
+  - alias: "Detect units and convert all values to mm for calculation"
+    variables:
+      x_uom: "{{ state_attr(x_entity, 'unit_of_measurement') or 'mm' }}"
+      y_uom: "{{ state_attr(y_entity, 'unit_of_measurement') or 'mm' }}"
+      zone_x1_uom: "{{ state_attr(zone_x1, 'unit_of_measurement') or 'mm' }}"
+      zone_x2_uom: "{{ state_attr(zone_x2, 'unit_of_measurement') or 'mm' }}"
+      zone_y1_uom: "{{ state_attr(zone_y1, 'unit_of_measurement') or 'mm' }}"
+      zone_y2_uom: "{{ state_attr(zone_y2, 'unit_of_measurement') or 'mm' }}"
+      uom_to_mm: {
+        'mm': 1,
+        'cm': 10,
+        'm': 1000,
+        'in': 25.4,
+        'ft': 304.8,
+        'yd': 914.4
+      }
   - alias: "Initialize data collection"
     variables:
       x_values: []
       y_values: []
       start_time: "{{ now().timestamp() }}"
-  - alias: "Collect X/Y data for duration"
+  - alias: "Collect X/Y data for duration (convert to mm)"
     repeat:
       while:
         - condition: template
           value_template: "{{ (now().timestamp() - start_time) < duration }}"
       sequence:
         - variables:
-            x: "{{ states(x_entity) | float(0) }}"
-            y: "{{ states(y_entity) | float(0) }}"
+            x_raw: "{{ states(x_entity) | float(0) }}"
+            y_raw: "{{ states(y_entity) | float(0) }}"
+            x: "{{ x_raw * uom_to_mm[x_uom] }}"
+            y: "{{ y_raw * uom_to_mm[y_uom] }}"
         - if:
             - condition: template
               value_template: "{{ x is number and y is number }}"
@@ -85,30 +103,36 @@ action:
                 x_values: "{{ x_values + [x] }}"
                 y_values: "{{ y_values + [y] }}"
         - delay: 1
-  - alias: "Calculate min/max and apply padding"
+  - alias: "Calculate min/max and apply padding (in mm)"
     variables:
       min_x: "{{ (x_values | length > 0 and (x_values | min) or 0) - padding }}"
       max_x: "{{ (x_values | length > 0 and (x_values | max) or 0) + padding }}"
       min_y: "{{ (y_values | length > 0 and (y_values | min) or 0) - padding }}"
       max_y: "{{ (y_values | length > 0 and (y_values | max) or 0) + padding }}"
+  - alias: "Convert results from mm to each zone entity's uom"
+    variables:
+      min_x_conv: "{{ min_x / uom_to_mm[zone_x1_uom] }}"
+      max_x_conv: "{{ max_x / uom_to_mm[zone_x2_uom] }}"
+      min_y_conv: "{{ min_y / uom_to_mm[zone_y1_uom] }}"
+      max_y_conv: "{{ max_y / uom_to_mm[zone_y2_uom] }}"
   - alias: "Set zone coordinates"
     sequence:
       - service: number.set_value
         data:
           entity_id: "{{ zone_x1 }}"
-          value: "{{ [[min_x, -4860.0] | max, 4860.0] | min }}"
+          value: "{{ [[min_x_conv, -4860.0] | max, 4860.0] | min }}"
       - service: number.set_value
         data:
           entity_id: "{{ zone_x2 }}"
-          value: "{{ [[max_x, -4860.0] | max, 4860.0] | min }}"
+          value: "{{ [[max_x_conv, -4860.0] | max, 4860.0] | min }}"
       - service: number.set_value
         data:
           entity_id: "{{ zone_y1 }}"
-          value: "{{ [[min_y, 0] | max, 7560.0] | min }}"
+          value: "{{ [[min_y_conv, 0] | max, 7560.0] | min }}"
       - service: number.set_value
         data:
           entity_id: "{{ zone_y2 }}"
-          value: "{{ [[max_y, 0] | max, 7560.0] | min }}"
+          value: "{{ [[max_y_conv, 0] | max, 7560.0] | min }}"
   - alias: "Restore previous multi-target state (if switch exists)"
     choose:
       - conditions:
