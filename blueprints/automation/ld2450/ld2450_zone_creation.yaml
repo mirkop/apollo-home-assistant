@@ -22,7 +22,7 @@ blueprint:
     padding:
       name: Padding (mm)
       description: Padding to add to the zone boundaries (in mm).
-      default: 100
+      default: 600
       selector:
         number:
           min: 0
@@ -153,10 +153,10 @@ action:
     data:
       title: "LD2450 Zone Created"
       message: >
-        Zone {{ zone }} created.\n
-        X1: {{ min_x }}\n
-        Y1: {{ min_y }}\n
-        X2: {{ max_x }}\n
-        Y2: {{ max_y }}\n
-        Padding: {{ padding }} mm\n
-        Duration: {{ duration }} seconds\n
+        Created Zone {{ zone }}
+        X1: {{ min_x_conv }} {{ zone_x1_uom }}
+        X2: {{ max_x_conv }} {{ zone_x2_uom }}
+        Y1: {{ min_y_conv }} {{ zone_y1_uom }}
+        Y2: {{ max_y_conv }} {{ zone_y2_uom }}
+        Padding: {{ padding }} mm
+        Duration: {{ duration }} seconds
