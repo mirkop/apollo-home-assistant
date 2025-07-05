@@ -88,8 +88,8 @@ action:
       }
   - alias: "Initialize data collection"
     variables:
-      x_values: []
-      y_values: []
+      x_mm_values: []
+      y_mm_values: []
       start_time: "{{ now().timestamp() }}"
   - alias: "Collect X/Y data for duration (convert to mm)"
     repeat:
@@ -100,39 +100,39 @@ action:
         - variables:
             x_raw: "{{ states(x_entity) | float(0) }}"
             y_raw: "{{ states(y_entity) | float(0) }}"
-            x: "{{ x_raw * uom_to_mm[x_uom] }}"
-            y: "{{ y_raw * uom_to_mm[y_uom] }}"
+            x_mm: "{{ x_raw * uom_to_mm[x_uom] }}"
+            y_mm: "{{ y_raw * uom_to_mm[y_uom] }}"
         - if:
             - condition: template
-              value_template: "{{ x is number and y is number and not (x == 0 and y == 0) }}"
+              value_template: "{{ x_mm is number and y_mm is number and not (x_mm == 0 and y_mm == 0) }}"
           then:
             - variables:
-                x_values: "{{ x_values + [x] }}"
-                y_values: "{{ y_values + [y] }}"
+                x_mm_values: "{{ x_mm_values + [x_mm] }}"
+                y_mm_values: "{{ y_mm_values + [y_mm] }}"
         - delay: 1
   - alias: "Calculate min/max and apply padding (in mm)"
     variables:
-      min_x: "{{ (x_values | length > 0 and (x_values | min) or 0) - padding }}"
-      max_x: "{{ (x_values | length > 0 and (x_values | max) or 0) + padding }}"
-      min_y: "{{ (y_values | length > 0 and (y_values | min) or 0) - padding }}"
-      max_y: "{{ (y_values | length > 0 and (y_values | max) or 0) + padding }}"
-  - alias: "Clamp values to valid range"
+      min_x_mm: "{{ (x_mm_values | length > 0 and (x_mm_values | min) or 0) - padding }}"
+      max_x_mm: "{{ (x_mm_values | length > 0 and (x_mm_values | max) or 0) + padding }}"
+      min_y_mm: "{{ (y_mm_values | length > 0 and (y_mm_values | min) or 0) - padding }}"
+      max_y_mm: "{{ (y_mm_values | length > 0 and (y_mm_values | max) or 0) + padding }}"
+  - alias: "Clamp values to valid range (mm)"
     variables:
-      min_x: "{{ (min_x | float(-4860)) if (min_x | float(-4860)) > -4860 else -4860 if (min_x | float(-4860)) < -4860 else min_x }}"
-      max_x: "{{ (max_x | float(4860)) if (max_x | float(4860)) < 4860 else 4860 if (max_x | float(4860)) > 4860 else max_x }}"
-      min_y: "{{ (min_y | float(0)) if (min_y | float(0)) > 0 else 0 if (min_y | float(0)) < 0 else min_y }}"
-      max_y: "{{ (max_y | float(7560)) if (max_y | float(7560)) < 7560 else 7560 if (max_y | float(7560)) > 7560 else max_y }}"
+      min_x_mm: "{{ (min_x_mm | float(-4860)) if (min_x_mm | float(-4860)) > -4860 else -4860 if (min_x_mm | float(-4860)) < -4860 else min_x_mm }}"
+      max_x_mm: "{{ (max_x_mm | float(4860)) if (max_x_mm | float(4860)) < 4860 else 4860 if (max_x_mm | float(4860)) > 4860 else max_x_mm }}"
+      min_y_mm: "{{ (min_y_mm | float(0)) if (min_y_mm | float(0)) > 0 else 0 if (min_y_mm | float(0)) < 0 else min_y_mm }}"
+      max_y_mm: "{{ (max_y_mm | float(7560)) if (max_y_mm | float(7560)) < 7560 else 7560 if (max_y_mm | float(7560)) > 7560 else max_y_mm }}"
   - alias: "Convert results from mm to each zone entity's uom"
     variables:
-      min_x_conv: "{{ min_x / uom_to_mm[zone_x1_uom] }}"
-      max_x_conv: "{{ max_x / uom_to_mm[zone_x2_uom] }}"
-      min_y_conv: "{{ min_y / uom_to_mm[zone_y1_uom] }}"
-      max_y_conv: "{{ max_y / uom_to_mm[zone_y2_uom] }}"
+      min_x_conv: "{{ min_x_mm / uom_to_mm[zone_x1_uom] }}"
+      max_x_conv: "{{ max_x_mm / uom_to_mm[zone_x2_uom] }}"
+      min_y_conv: "{{ min_y_mm / uom_to_mm[zone_y1_uom] }}"
+      max_y_conv: "{{ max_y_mm / uom_to_mm[zone_y2_uom] }}"
   - alias: "Set zone coordinates if data was collected"
     choose:
       - conditions:
           - condition: template
-            value_template: "{{ x_values | length > 0 and y_values | length > 0 }}"
+            value_template: "{{ x_mm_values | length > 0 and y_mm_values | length > 0 }}"
         sequence:
           - service: number.set_value
             data:
@@ -163,7 +163,7 @@ action:
     choose:
       - conditions:
           - condition: template
-            value_template: "{{ x_values | length > 0 and y_values | length > 0 }}"
+            value_template: "{{ x_mm_values | length > 0 and y_mm_values | length > 0 }}"
         sequence:
           - service: persistent_notification.create
             data:
@@ -178,7 +178,7 @@ action:
                 Duration: {{ duration }} seconds
       - conditions:
           - condition: template
-            value_template: "{{ x_values | length == 0 or y_values | length == 0 }}"
+            value_template: "{{ x_mm_values | length == 0 or y_mm_values | length == 0 }}"
         sequence:
           - service: persistent_notification.create
             data:
