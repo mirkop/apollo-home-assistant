@@ -21,7 +21,7 @@ blueprint:
           step: 1
     padding:
       name: Padding (mm)
-      description: >
+      description: |
         Padding to add to the zone boundaries (in mm). There are approximately 304.8 mm in a foot.
       default: 100
       selector:
