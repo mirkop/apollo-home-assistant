@@ -98,7 +98,7 @@ action:
             y: "{{ y_raw * uom_to_mm[y_uom] }}"
         - if:
             - condition: template
-              value_template: "{{ x is number and y is number }}"
+              value_template: "{{ x is number and y is number and not (x == 0 and y == 0) }}"
           then:
             - variables:
                 x_values: "{{ x_values + [x] }}"
