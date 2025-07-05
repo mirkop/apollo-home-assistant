@@ -118,10 +118,10 @@ action:
       max_y: "{{ (y_values | length > 0 and (y_values | max) or 0) + padding }}"
   - alias: "Clamp values to valid range"
     variables:
-      min_x: "{{ [[min_x, -4860.0] | max, 4860.0] | min }}"
-      max_x: "{{ [[max_x, -4860.0] | max, 4860.0] | min }}"
-      min_y: "{{ [[min_y, 0] | max, 7560.0] | min }}"
-      max_y: "{{ [[max_y, 0] | max, 7560.0] | min }}"
+      min_x: "{{ (min_x | float(-4860)) if (min_x | float(-4860)) > -4860 else -4860 if (min_x | float(-4860)) < -4860 else min_x }}"
+      max_x: "{{ (max_x | float(4860)) if (max_x | float(4860)) < 4860 else 4860 if (max_x | float(4860)) > 4860 else max_x }}"
+      min_y: "{{ (min_y | float(0)) if (min_y | float(0)) > 0 else 0 if (min_y | float(0)) < 0 else min_y }}"
+      max_y: "{{ (max_y | float(7560)) if (max_y | float(7560)) < 7560 else 7560 if (max_y | float(7560)) > 7560 else max_y }}"
   - alias: "Convert results from mm to each zone entity's uom"
     variables:
       min_x_conv: "{{ min_x / uom_to_mm[zone_x1_uom] }}"
