@@ -3,23 +3,24 @@
 This Home Assistant automation blueprint is designed for the LD2450 radar sensor included in the Apollo MTR-1 and R-PRO-1 devices:
 
 **Product Pages:**
+
 - [Apollo MTR-1 Product Page](https://apolloautomation.com/products/mtr-1)
 - [Apollo R-PRO-1 Product Page](https://apolloautomation.com/products/r-pro-1)
 
 **GitHub Repositories:**
+
 - [Apollo MTR-1 GitHub](https://github.com/ApolloAutomation/MTR-1)
 - [Apollo R-PRO-1 GitHub](https://github.com/ApolloAutomation/R_PRO-1)
 
 ## Features
 
 - Automatically switches the LD2450 to single target mode for accurate zone creation, then restores the previous mode.
-- Allows users to select which zone to set (1, 2, or 3) and the duration for data collection (default: 60 seconds, user-configurable).
+- Allows users to select which zone to set (1, 2, or 3) and the duration for data collection (default: 20 seconds, user-configurable).
 - Collects X/Y position data of the target during the set duration.
 - Tracks minimum and maximum X/Y positions to define the zone boundaries.
-- Optionally adds user-defined padding to the zone boundaries.
-- Ignores outlier values that fall far outside the collected data.
+- Adds user-defined padding to the zone boundaries. (default: 150 mm, user-configurable)
 - Sets the selected zone's coordinates (X1/Y1, X2/Y2) based on the collected data.
-- Supports both Zone Types: Disabled/Detection and Filter.
+- Can be used for all Zone Types: Disabled, Detection and Filter.
 
 ## Installation
 
@@ -71,14 +72,14 @@ After installing the blueprint (see Installation above):
 ### 3. Configure the Automation
 
 - **Zone X1 Entity:**  
-  Select the `number` entity for the X1 coordinate of the zone you want to set (e.g., `number.apollo_r_pro_1_w_bad455_zone_1_x1`).  
+  Select the Zone X1 entity of the zone you want to set (e.g., "Zone-1 X1").  
   The automation will automatically determine the other zone entities (X2, Y1, Y2) and the correct sensor entities for X/Y data collection.
 
 - **Collection Duration (seconds):**  
   Set how long to collect X/Y data for zone creation. Default is 20 seconds.
 
 - **Padding (mm):**  
-  Set the padding to add to the zone boundaries (in millimeters).  
+  Set the padding to add to the zone boundaries (in millimeters). Default is 150 mm.
   (Tip: There are approximately 304.8 mm in a foot.)
 
 ### 4. Prepare for Zone Creation
@@ -88,38 +89,42 @@ After installing the blueprint (see Installation above):
 
 ### 5. Trigger the Automation
 
-- **Button Helper (Recommended):**  
-  Press the button helper you created (e.g., `input_button.ld2450_zone_create`) from your dashboard or the Helpers page.
-- **Event Trigger (Advanced):**  
-  Fire the `ld2450_zone_create` event from Developer Tools > Events.
+You can trigger the automation in any of the following three ways:
+
+- **Button Helper (Recommended for Manual Use):**
+
+  - Go to **Settings > Devices & Services > Helpers** in Home Assistant.
+  - Click **Add Helper** and choose **Button**.
+  - Name it (e.g., `LD2450 Zone Create`) and save.
+  - When creating your automation from this blueprint, select the button entity (e.g., `input_button.ld2450_zone_create`) as the trigger.
+  - You can add this button to your dashboard for one-click access.
+  - To run: Press the button helper you created from your dashboard or the Helpers page.
+
+- **Manual Run from Home Assistant UI:**
+
+  - You can also run the automation manually at any time:
+    1. Go to **Settings > Automations & Scenes > Automations** in Home Assistant.
+    2. Find your automation created from this blueprint.
+    3. (Optional) Click **Edit** to modify any settings or actions, then **Save** your changes.
+    4. Click the **Run** button to execute the actions immediately.
+  - _Note: This is possible because the blueprint includes a manual trigger. See code comments in the YAML for more details. Running the automation this way allows you to make and save changes before execution, which is useful for testing or adjustments._
+
+- **Event Trigger (Advanced/Developer):**
+
+  - You can trigger the automation by firing a custom event named `ld2450_zone_create`.
+  - Go to **Developer Tools > Events** in Home Assistant.
+  - Enter `ld2450_zone_create` as the event type and click **Fire Event**.
+  - This is useful for advanced users or for triggering from other automations/scripts.
 
 ### 6. Review Results
 
 - After the automation runs, a persistent notification will summarize the created zone or indicate if no valid data was collected.
-
-## How to Trigger the Automation
-
-This blueprint supports two easy ways to start the zone creation process:
-
-### 1. Button Helper (Recommended for Manual Use)
-- Go to **Settings > Devices & Services > Helpers** in Home Assistant.
-- Click **Add Helper** and choose **Button**.
-- Name it (e.g., `LD2450 Zone Create`) and save.
-- When creating your automation from this blueprint, select the button entity (e.g., `input_button.ld2450_zone_create`) as the trigger.
-- You can add this button to your dashboard for one-click access.
-
-### 2. Event Trigger (Advanced/Developer)
-- You can trigger the automation by firing a custom event named `ld2450_zone_create`.
-- Go to **Developer Tools > Events** in Home Assistant.
-- Enter `ld2450_zone_create` as the event type and click **Fire Event**.
-- This is useful for advanced users or for triggering from other automations/scripts.
-
-You can use either method, or both, depending on your preference and setup. For most users, the button helper is the easiest and most visible way to run the automation.
+- If the zone was not created as desired, running the automation again will overwrite the existing zone.
 
 ## Notes
 
 - The automation is designed to be user-friendly and robust, automatically handling mode switching and outlier filtering.
-- Padding and outlier filtering methods can be adjusted in the blueprint as needed.
+- Padding can be adjusted in the blueprint as needed.
 - For best results, ensure only the desired target is present in the coverage area during data collection.
 
 ## Feedback & Support
@@ -127,5 +132,8 @@ You can use either method, or both, depending on your preference and setup. For 
 If you have suggestions, encounter issues, or want to contribute improvements, please open an issue or pull request in this project's repository.
 
 ---
+
+**Disclaimer:**
+This project is provided "as-is" without any warranties or guarantees. Use at your own risk. The authors and contributors are not responsible for any damages or issues that may arise from its use.
 
 **Let us know if you have additional requirements or questions!**

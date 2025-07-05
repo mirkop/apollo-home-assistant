@@ -37,6 +37,12 @@ trigger:
     entity_id: input_button.ld2450_zone_create
   - platform: event
     event_type: ld2450_zone_create
+  # You can also trigger this automation manually from the Home Assistant UI:
+  # 1. Go to Settings > Automations & Scenes > Automations.
+  # 2. Find your automation created from this blueprint.
+  # 3. Click the "Run" button to execute the actions immediately.
+  - platform: homeassistant
+    event: start  # This enables manual execution via the UI (the trigger will never actually fire, but allows manual runs).
 
 variables:
   zone_x1_entity: !input zone_x1_entity
