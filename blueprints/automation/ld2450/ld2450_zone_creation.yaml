@@ -122,24 +122,28 @@ action:
       max_x_conv: "{{ max_x / uom_to_mm[zone_x2_uom] }}"
       min_y_conv: "{{ min_y / uom_to_mm[zone_y1_uom] }}"
       max_y_conv: "{{ max_y / uom_to_mm[zone_y2_uom] }}"
-  - alias: "Set zone coordinates"
-    sequence:
-      - service: number.set_value
-        data:
-          entity_id: "{{ zone_x1 }}"
-          value: "{{ min_x_conv }}"
-      - service: number.set_value
-        data:
-          entity_id: "{{ zone_x2 }}"
-          value: "{{ max_x_conv }}"
-      - service: number.set_value
-        data:
-          entity_id: "{{ zone_y1 }}"
-          value: "{{ min_y_conv }}"
-      - service: number.set_value
-        data:
-          entity_id: "{{ zone_y2 }}"
-          value: "{{ max_y_conv }}"
+  - alias: "Set zone coordinates if data was collected"
+    choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ x_values | length > 0 and y_values | length > 0 }}"
+        sequence:
+          - service: number.set_value
+            data:
+              entity_id: "{{ zone_x1 }}"
+              value: "{{ min_x_conv }}"
+          - service: number.set_value
+            data:
+              entity_id: "{{ zone_x2 }}"
+              value: "{{ max_x_conv }}"
+          - service: number.set_value
+            data:
+              entity_id: "{{ zone_y1 }}"
+              value: "{{ min_y_conv }}"
+          - service: number.set_value
+            data:
+              entity_id: "{{ zone_y2 }}"
+              value: "{{ max_y_conv }}"
   - alias: "Restore previous multi-target state (if switch exists)"
     choose:
       - conditions:
@@ -150,13 +154,28 @@ action:
             target:
               entity_id: "{{ multi_switch }}"
   - alias: "Send summary notification"
-    service: persistent_notification.create
-    data:
-      title: "LD2450 {{ device_base_name }} Zone {{ zone }} Created"
-      message: |
-        X1: {{ min_x_conv }} {{ zone_x1_uom }}
-        X2: {{ max_x_conv }} {{ zone_x2_uom }}
-        Y1: {{ min_y_conv }} {{ zone_y1_uom }}
-        Y2: {{ max_y_conv }} {{ zone_y2_uom }}
-        Padding: {{ padding }} mm
-        Duration: {{ duration }} seconds
+    choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ x_values | length > 0 and y_values | length > 0 }}"
+        sequence:
+          - service: persistent_notification.create
+            data:
+              title: "LD2450 Zone Created/Updated"
+              message: |
+                Created Zone {{ zone }}
+                X1: {{ min_x_conv }} {{ zone_x1_uom }}
+                X2: {{ max_x_conv }} {{ zone_x2_uom }}
+                Y1: {{ min_y_conv }} {{ zone_y1_uom }}
+                Y2: {{ max_y_conv }} {{ zone_y2_uom }}
+                Padding: {{ padding }} mm
+                Duration: {{ duration }} seconds
+      - conditions:
+          - condition: template
+            value_template: "{{ x_values | length == 0 or y_values | length == 0 }}"
+        sequence:
+          - service: persistent_notification.create
+            data:
+              title: "LD2450 Zone Not Created/Updated"
+              message: |
+                No valid data was collected. Zone {{ zone }} was not created or updated.
