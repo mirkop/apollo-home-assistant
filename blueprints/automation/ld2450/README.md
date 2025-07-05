@@ -21,6 +21,7 @@ This Home Assistant automation blueprint is designed for the LD2450 radar sensor
 - Adds user-defined padding to the zone boundaries. (default: 150 mm, user-configurable)
 - Sets the selected zone's coordinates (X1/Y1, X2/Y2) based on the collected data.
 - Can be used for all Zone Types: Disabled, Detection and Filter.
+- The script automatically performs unit of measurement conversions, ensuring consistent output regardless of the entity values' original units.
 
 ## Installation
 
