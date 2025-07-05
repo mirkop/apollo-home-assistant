@@ -72,8 +72,10 @@ After installing the blueprint (see Installation above):
 ### 3. Configure the Automation
 
 - **Zone X1 Entity:**  
-  Select the Zone X1 entity of the zone you want to set (e.g., "Zone-1 X1").  
+  Select the Zone X1 entity of the zone you want to set (e.g., "Zone-1 X1").
   The automation will automatically determine the other zone entities (X2, Y1, Y2) and the correct sensor entities for X/Y data collection.
+
+  - **Tip:** When selecting this entity, typing "zone x1" in the search box will quickly provide a list of the desired entities for this input.
 
 - **Collection Duration (seconds):**  
   Set how long to collect X/Y data for zone creation. Default is 20 seconds.
