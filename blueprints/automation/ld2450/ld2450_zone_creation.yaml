@@ -152,7 +152,7 @@ action:
     service: persistent_notification.create
     data:
       title: "LD2450 Zone Created"
-      message: >
+      message: |
         Created Zone {{ zone }}
         X1: {{ min_x_conv }} {{ zone_x1_uom }}
         X2: {{ max_x_conv }} {{ zone_x2_uom }}
