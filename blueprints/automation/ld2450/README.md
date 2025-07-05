@@ -2,8 +2,13 @@
 
 This Home Assistant automation blueprint is designed for the LD2450 radar sensor included in the Apollo MTR-1 and R-PRO-1 devices:
 
-- [Apollo MTR-1](https://github.com/ApolloAutomation/MTR-1)
-- [Apollo R-PRO-1](https://github.com/ApolloAutomation/R_PRO-1)
+**Product Pages:**
+- [Apollo MTR-1 Product Page](https://apolloautomation.com/products/mtr-1)
+- [Apollo R-PRO-1 Product Page](https://apolloautomation.com/products/r-pro-1)
+
+**GitHub Repositories:**
+- [Apollo MTR-1 GitHub](https://github.com/ApolloAutomation/MTR-1)
+- [Apollo R-PRO-1 GitHub](https://github.com/ApolloAutomation/R_PRO-1)
 
 ## Features
 
