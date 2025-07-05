@@ -143,7 +143,7 @@ action:
     choose:
       - conditions:
           - condition: template
-            value_template: "{{ multi_switch in states and prev_multi_state is defined and prev_multi_state == 'on' }}"
+            value_template: "{{ states(multi_switch) is not none }}"
         sequence:
           - service: switch.turn_on
             target:
