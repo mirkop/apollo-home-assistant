@@ -151,9 +151,8 @@ action:
   - alias: "Send summary notification"
     service: persistent_notification.create
     data:
-      title: "LD2450 Zone Created"
+      title: "LD2450 {{ device_base_name }} Zone {{ zone }} Created"
       message: |
-        Created Zone {{ zone }}
         X1: {{ min_x_conv }} {{ zone_x1_uom }}
         X2: {{ max_x_conv }} {{ zone_x2_uom }}
         Y1: {{ min_y_conv }} {{ zone_y1_uom }}
