@@ -170,10 +170,10 @@ action:
               title: "LD2450 Zone Created/Updated"
               message: |
                 Created Zone {{ zone }}
-                X1: {{ min_x_conv }} {{ zone_x1_uom }}
-                X2: {{ max_x_conv }} {{ zone_x2_uom }}
-                Y1: {{ min_y_conv }} {{ zone_y1_uom }}
-                Y2: {{ max_y_conv }} {{ zone_y2_uom }}
+                X1: {{ min_x_conv | round(1) }} {{ zone_x1_uom }}
+                X2: {{ max_x_conv | round(1) }} {{ zone_x2_uom }}
+                Y1: {{ min_y_conv | round(1) }} {{ zone_y1_uom }}
+                Y2: {{ max_y_conv | round(1) }} {{ zone_y2_uom }}
                 Padding: {{ padding }} mm
                 Duration: {{ duration }} seconds
       - conditions:
