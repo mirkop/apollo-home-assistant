@@ -1,29 +1,29 @@
 blueprint:
   name: LD2450 Zone Creation
   description: >
-    Create a zone for the LD2450 radar sensor (Apollo MTR-1/R-PRO-1) by collecting X/Y position data for a target over a set duration. Automatically handles single target mode, outlier filtering, and provides a summary of the created zone.
+    Create a zone for the LD2450 radar sensor (Apollo MTR-1/R-PRO-1) by collecting X/Y position data for a target over a set duration. Automatically sets single target mode, and provides a notification summary of the created zone.
   domain: automation
   input:
     zone_x1_entity:
-      name: Zone X1 Number Entity
-      description: Select the X1 number entity for the zone you want to set.
+      name: Zone X1 Entity
+      description: Select the Zone X1 entity for the zone you want to set.
       selector:
         entity:
           domain: number
     duration:
       name: Collection Duration (seconds)
       description: How long to collect X/Y data for zone creation.
-      default: 15
+      default: 20
       selector:
         number:
-          min: 10
+          min: 5
           max: 300
-          step: 1
+          step: 5
     padding:
       name: Padding (mm)
       description: |
         Padding to add to the zone boundaries (in mm). There are approximately 304.8 mm in a foot.
-      default: 100
+      default: 150
       selector:
         number:
           min: 0
