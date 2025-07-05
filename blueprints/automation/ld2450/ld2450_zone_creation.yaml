@@ -56,7 +56,7 @@ action:
     choose:
       - conditions:
           - condition: template
-            value_template: "{{ multi_switch in states and state_attr(multi_switch, 'friendly_name') is defined }}"
+            value_template: "{{ states(multi_switch) is not none }}"
         sequence:
           - variables:
               prev_multi_state: "{{ states(multi_switch) }}"
